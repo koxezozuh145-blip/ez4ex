@@ -1,0 +1,1167 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ez4ex — пересдача по микроэкономике</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+:root{
+  --page:#f0f0f1; --card:#ffffff; --ink:#18181a; --ink2:#5d5f66; --ink3:#8b8d94;
+  --line:rgba(0,0,0,.07); --soft:#f2f2f4; --soft2:#e6e6e9; --on:#ffffff; --mid:#b6b7bc;
+  --shadow:0 1px 2px rgba(0,0,0,.04),0 8px 24px rgba(0,0,0,.05);
+  --r:24px; --r2:18px; --r3:14px;
+  --ease:cubic-bezier(.2,.8,.2,1);
+}
+:root[data-theme="dark"]{
+  --page:#0f1012; --card:#1b1c1f; --ink:#f2f2f3; --ink2:#b3b5bb; --ink3:#83868d;
+  --line:rgba(255,255,255,.07); --soft:#25262a; --soft2:#303136; --on:#121214; --mid:#5a5c62;
+  --shadow:0 1px 0 rgba(255,255,255,.03);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--page);color:var(--ink)}
+body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  font-size:16px;line-height:1.45;-webkit-font-smoothing:antialiased;
+  padding:env(safe-area-inset-top,0px) 0 calc(96px + env(safe-area-inset-bottom,0px))}
+body.hasbar{padding-bottom:calc(160px + env(safe-area-inset-bottom,0px))}
+button,input,textarea{font:inherit;color:inherit}
+button{cursor:pointer;border:0;background:none;padding:0;transition:transform .15s var(--ease),background-color .2s,color .2s}
+button:active:not(:disabled){transform:scale(.97)}
+button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid var(--ink3);outline-offset:2px}
+.wrap{max-width:540px;margin:0 auto;padding:12px 16px 0}
+
+/* top */
+.top{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:4px 0 6px}
+.tl{display:flex;align-items:center;gap:8px}
+.ptitle{background:var(--ink);color:var(--on);padding:8px 18px;border-radius:999px;font-weight:700;font-size:15px}
+.iconbtn{width:40px;height:40px;border-radius:50%;background:var(--card);box-shadow:var(--shadow);display:grid;place-items:center;color:var(--ink)}
+.iconbtn svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.subline{font-size:14px;color:var(--ink2);margin:2px 2px 14px}
+.subline button{color:var(--ink);font-weight:600;text-decoration:underline;text-underline-offset:3px}
+
+/* cards & text */
+.card{background:var(--card);border-radius:var(--r);padding:18px;margin-bottom:12px;box-shadow:var(--shadow)}
+.ch{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin:0 0 12px}
+.ch h2{font-size:17px;margin:0;font-weight:700}
+.ch small{color:var(--ink2);font-size:13.5px;text-align:right}
+.muted{color:var(--ink2);font-size:14px;margin:0}
+.lbl{display:flex;justify-content:space-between;align-items:baseline;font-size:15px;font-weight:600;margin:18px 0 8px}
+.lbl small{color:var(--ink2);font-size:13px;font-weight:400}
+
+/* buttons */
+.primary{display:block;width:100%;padding:16px;border-radius:var(--r2);background:var(--ink);color:var(--on);font-size:16.5px;font-weight:700}
+.secondary{display:block;width:100%;padding:14px;border-radius:var(--r2);background:var(--soft);font-weight:600;font-size:15px;margin-top:8px}
+.secondary.danger{color:#d0453b}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.row2 button{padding:12px 8px;border-radius:var(--r3);background:var(--soft);font-weight:600;font-size:14.5px}
+.link{color:var(--ink);font-weight:600;font-size:14.5px;text-decoration:underline;text-underline-offset:3px;margin-top:12px}
+
+/* hero */
+.hero .eyebrow{font-size:14px;color:var(--ink2);margin-bottom:4px}
+.hero .hname{font-size:24px;font-weight:800;letter-spacing:-.02em;line-height:1.2;margin-bottom:4px}
+.hero .hmeta{font-size:14px;color:var(--ink2);margin-bottom:16px}
+.tring{position:relative;width:168px;height:168px;margin:2px auto 12px}
+.tring svg,.ring svg,.circ svg{width:100%;height:100%;transform:rotate(-90deg)}
+.tring .v,.ring .v{position:absolute;inset:0;display:grid;place-items:center;text-align:center}
+.tring b{font-size:36px;font-weight:800;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.tring small,.ring small{display:block;font-size:12.5px;color:var(--ink2);margin-top:2px}
+.tname{text-align:center;font-weight:700;font-size:17px;margin-bottom:4px}
+.tsub{text-align:center;color:var(--ink2);font-size:13.5px;margin-bottom:14px}
+.banner{background:var(--soft);border-radius:var(--r2);padding:14px;margin-bottom:14px}
+.banner b{display:block;margin-bottom:10px;font-size:15px}
+
+/* progress of day */
+.pbar{height:10px;border-radius:6px;background:var(--soft);overflow:hidden}
+.pbar div{height:100%;background:var(--ink);border-radius:6px;transition:width .5s var(--ease)}
+.sess{display:flex;align-items:center;gap:12px;padding:11px 0;border-top:1px solid var(--line);font-size:15px}
+.sess:first-child{border-top:0}
+.sess .code{flex:none;width:30px;font-weight:700;font-size:13px;color:var(--ink2)}
+.sess .nm{flex:1}
+.sess .nm small{display:block;color:var(--ink2);font-size:13px}
+.sess .x{flex:none;width:32px;height:32px;border-radius:50%;background:var(--soft);color:var(--ink2);font-size:18px;line-height:1}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{padding:9px 14px;border-radius:999px;background:var(--soft);font-size:14.5px}
+.chip.on{background:var(--ink);color:var(--on)}
+.chip.ghost{background:transparent;box-shadow:inset 0 0 0 1px var(--soft2)}
+.chip.ghost.on{background:var(--soft2);color:var(--ink);box-shadow:none}
+
+/* row cards */
+.rowcard{display:flex;align-items:center;gap:14px;width:100%;text-align:left}
+.rowcard .ic{flex:none;width:46px;height:46px;border-radius:15px;background:var(--soft);display:grid;place-items:center}
+.rowcard .ic svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.rowcard .tx{flex:1;min-width:0}
+.rowcard b{display:block;font-size:16.5px}
+.rowcard small{display:block;color:var(--ink2);font-size:14px;margin-top:2px}
+.rowcard .chev{flex:none;color:var(--ink3);font-size:22px}
+.ring{flex:none;position:relative;width:56px;height:56px}
+.ring b{font-size:17px;font-weight:800}
+
+/* form controls */
+.opts{display:grid;gap:6px}
+.o3{grid-template-columns:repeat(3,1fr)}
+.opt{padding:12px 6px;border-radius:var(--r3);background:var(--soft);font-size:15px;font-weight:600;text-align:center}
+.opt.on{background:var(--ink);color:var(--on)}
+.states{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.state{padding:14px;border-radius:var(--r3);background:var(--soft);text-align:left;font-weight:600;font-size:15px}
+.state:last-child{grid-column:span 2}
+.state.on{background:var(--ink);color:var(--on)}
+.sc{margin-top:14px}
+.sch{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:7px;font-size:15px}
+.sch small{color:var(--ink2);font-size:13.5px}
+.seg{display:grid;gap:4px;grid-template-columns:repeat(10,1fr)}
+.seg button{height:26px;border-radius:8px;background:var(--soft2)}
+.seg button.f{background:var(--ink)}
+.confirm{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px;border-radius:var(--r2);background:var(--soft)}
+.confirm b{display:block;font-size:19px}
+.confirm small{display:block;color:var(--ink2);font-size:13.5px}
+.mini{display:flex;gap:6px}
+.mini button{padding:10px 16px;border-radius:12px;background:var(--card);font-weight:600;font-size:14.5px}
+.mini button.dark{background:var(--ink);color:var(--on)}
+.times{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.time{background:var(--soft);border-radius:var(--r2);padding:10px 8px;text-align:center}
+.time small{display:block;font-size:13px;color:var(--ink2)}
+.time .tv{display:flex;align-items:center;justify-content:space-between}
+.time b{font-size:22px;font-variant-numeric:tabular-nums}
+.time button{width:38px;height:38px;border-radius:12px;background:var(--card);font-size:20px;font-weight:700}
+.night{position:relative;height:30px;border-radius:12px;background:var(--soft);overflow:hidden}
+.night .fill{position:absolute;top:0;bottom:0;background:var(--ink);border-radius:12px}
+.night .nl{position:absolute;inset:0;display:grid;place-items:center;font-weight:700;font-size:13.5px;mix-blend-mode:difference;color:#fff}
+.ticks{display:flex;justify-content:space-between;font-size:12px;color:var(--ink2);margin:5px 2px 12px}
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.tile{min-height:54px;padding:12px 14px;border-radius:var(--r3);background:var(--soft);text-align:left;font-size:15px;font-weight:600}
+.tile.on{background:var(--ink);color:var(--on)}
+.field{width:100%;padding:13px 14px;border-radius:var(--r3);border:0;background:var(--soft);outline:none}
+.field:focus{box-shadow:inset 0 0 0 2px var(--soft2)}
+textarea.field{resize:vertical;min-height:84px}
+
+/* topic lists */
+.switch{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;padding:4px;border-radius:16px;background:var(--soft2);margin-bottom:12px}
+.switch button{padding:10px 4px;border-radius:12px;font-weight:600;font-size:14.5px;color:var(--ink2)}
+.switch button.on{background:var(--card);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.big{display:flex;align-items:baseline;gap:8px;margin-bottom:12px}
+.big b{font-size:44px;font-weight:800;letter-spacing:-.04em;line-height:1}
+.bar{display:flex;gap:3px}
+.bar i{flex:1;height:10px;border-radius:4px;background:var(--soft2)}
+.bar i.s1{background:var(--mid)}
+.bar i.s2{background:var(--ink)}
+.legend{display:flex;gap:16px;font-size:13px;color:var(--ink2);margin-top:12px}
+.legend span::before{content:"";display:inline-block;width:10px;height:10px;border-radius:4px;margin-right:6px;background:var(--soft2);vertical-align:-1px}
+.legend .l1::before{background:var(--mid)}
+.legend .l2::before{background:var(--ink)}
+.mtop{display:block;width:100%;text-align:left}
+.mtop .row1{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:10px}
+.mtop b{font-size:15.5px}
+.mtop small{flex:none;color:var(--ink2);font-size:13.5px}
+.tlist{margin-top:12px}
+.trow{display:flex;gap:12px;align-items:center;width:100%;padding:12px 0;border-top:1px solid var(--line);text-align:left}
+.trow .code{flex:none;font-weight:700;font-size:13px;color:var(--ink2);width:28px}
+.trow .tx{flex:1;min-width:0}
+.trow .tx b{display:block;font-size:15px;font-weight:600}
+.trow .tx small{display:block;color:var(--ink2);font-size:13px;line-height:1.35;margin-top:2px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.trow .sc2{flex:none;font-size:13px;color:var(--ink2);font-weight:600}
+.dot{flex:none;width:24px;height:24px;border-radius:50%;background:var(--soft2);display:grid;place-items:center;font-size:12px;font-weight:800}
+.dot.s1{background:linear-gradient(90deg,var(--ink2) 50%,var(--soft2) 50%)}
+.dot.s2{background:var(--ink);color:var(--on)}
+.pday{padding:14px 0;border-top:1px solid var(--line)}
+.pday:first-of-type{border-top:0;padding-top:0}
+.pday .ph{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;font-size:15px}
+.pday .ph b{font-weight:700}
+.pday .ph small{color:var(--ink2);font-size:13px}
+.pday.past{opacity:.55}
+.pday.today .ph b::after{content:"сегодня";margin-left:8px;font-size:12px;font-weight:700;background:var(--ink);color:var(--on);padding:2px 8px;border-radius:999px;vertical-align:2px}
+
+/* progress */
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.kpi{background:var(--card);border-radius:20px;padding:14px;box-shadow:var(--shadow)}
+.kpi b{display:block;font-size:26px;font-weight:800;letter-spacing:-.03em}
+.kpi span{font-size:13px;color:var(--ink2);line-height:1.3;display:block}
+.chart{width:100%;height:auto;display:block}
+.chart .ax{fill:var(--ink2);font-size:10px}
+.chart .gl{stroke:var(--line);stroke-width:1}
+.chart .goal{stroke:var(--ink3);stroke-dasharray:3 4;stroke-width:1}
+.lg{display:flex;gap:16px;font-size:13px;color:var(--ink2);margin-top:8px;flex-wrap:wrap}
+.lg i{display:inline-block;width:16px;height:0;border-top:2px solid var(--ink);margin-right:6px;vertical-align:4px}
+.lg i.d{border-top-style:dashed;border-color:var(--ink3)}
+.lg i.b{width:10px;height:10px;border:0;background:var(--ink);border-radius:3px;vertical-align:-1px}
+.circles{display:grid;grid-template-columns:repeat(3,1fr);gap:16px 6px}
+.circ{text-align:center;font-size:13px;color:var(--ink2);line-height:1.3}
+.circ .rg{position:relative;width:74px;height:74px;margin:0 auto 6px}
+.circ .rg b{position:absolute;inset:0;display:grid;place-items:center;font-size:15px;color:var(--ink)}
+.ins{padding:14px 0;border-top:1px solid var(--line);font-size:15px}
+.ins:first-child{border-top:0;padding-top:0}
+.tag{display:inline-block;font-size:12.5px;font-weight:700;padding:3px 10px;border-radius:999px;background:var(--soft);margin-bottom:6px}
+.tag.dark{background:var(--ink);color:var(--on)}
+
+/* quiz */
+.qprog{display:flex;gap:4px;margin-bottom:16px}
+.qprog i{flex:1;height:6px;border-radius:3px;background:var(--soft2)}
+.qprog i.f{background:var(--ink)}
+.qtext{font-size:18px;font-weight:600;margin:0 0 16px;line-height:1.4}
+.qo{display:flex;gap:12px;align-items:center;width:100%;padding:14px;border-radius:var(--r3);background:var(--soft);text-align:left;margin-bottom:8px;font-size:15.5px}
+.qo .mk{flex:none;width:26px;height:26px;border-radius:50%;background:var(--card);display:grid;place-items:center;font-weight:800;font-size:12.5px}
+.qo.right{background:var(--ink);color:var(--on)}
+.qo.right .mk{background:var(--on);color:var(--ink)}
+.qo.wrong{background:var(--soft2);text-decoration:line-through;text-decoration-color:var(--ink3)}
+.expl{padding:14px;border-radius:var(--r3);box-shadow:inset 0 0 0 1px var(--soft2);font-size:15px;margin:6px 0 14px}
+
+/* calendar */
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;text-align:center}
+.cal .wd{font-size:12px;color:var(--ink2);padding-bottom:2px}
+.cal button{aspect-ratio:1;border-radius:14px;background:var(--soft);font-weight:600;font-size:15px;position:relative}
+.cal button:disabled{background:transparent;color:var(--ink3)}
+.cal button.has::after{content:"";position:absolute;left:50%;bottom:6px;width:5px;height:5px;margin-left:-2.5px;border-radius:50%;background:var(--ink)}
+.cal button.on{background:var(--ink);color:var(--on)}
+.cal button.on.has::after{background:var(--on)}
+.cal button.exam{box-shadow:inset 0 0 0 2px var(--ink)}
+
+/* nav, timer bar, sheet */
+.nav{position:fixed;left:0;right:0;bottom:0;background:var(--card);padding:8px 8px calc(8px + env(safe-area-inset-bottom,0px));z-index:5;box-shadow:0 -1px 0 var(--line)}
+.nav div{display:flex;max-width:540px;margin:0 auto}
+.tab{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:12px;color:var(--ink2);font-weight:600}
+.tab .ic{width:56px;height:32px;border-radius:16px;display:grid;place-items:center;color:var(--ink2);transition:background-color .2s}
+.tab svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.tab.on{color:var(--ink)}
+.tab.on .ic{background:var(--ink);color:var(--on)}
+.tbar{position:fixed;left:12px;right:12px;bottom:calc(76px + env(safe-area-inset-bottom,0px));z-index:6;max-width:516px;margin:0 auto;
+  background:var(--ink);color:var(--on);border-radius:20px;padding:10px 10px 10px 16px;display:none;align-items:center;gap:10px;box-shadow:0 8px 24px rgba(0,0,0,.18)}
+.tbar.show{display:flex}
+.tbar .pulse{flex:none;width:8px;height:8px;border-radius:50%;background:var(--on);animation:pulse 1.6s infinite}
+.tbar .tt{flex:1;min-width:0;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tbar .tt b{font-variant-numeric:tabular-nums;margin-right:6px}
+.tbar button{flex:none;padding:8px 12px;border-radius:12px;background:rgba(127,127,127,.25);color:var(--on);font-weight:600;font-size:13.5px}
+@keyframes pulse{50%{opacity:.25}}
+.backdrop{position:fixed;inset:0;z-index:10;background:rgba(0,0,0,.38);opacity:0;pointer-events:none;transition:opacity .25s}
+.backdrop.open{opacity:1;pointer-events:auto}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:11;max-width:560px;margin:0 auto;max-height:90vh;overflow-y:auto;overscroll-behavior:contain;
+  background:var(--card);border-radius:28px 28px 0 0;padding:8px 18px calc(18px + env(safe-area-inset-bottom,0px));
+  transform:translateY(105%);transition:transform .32s var(--ease)}
+.sheet.open{transform:translateY(0)}
+.handle{width:40px;height:5px;border-radius:3px;background:var(--soft2);margin:4px auto 14px}
+.sheet h2{font-size:20px;margin:0 0 4px}
+.sheet .stitle{margin-bottom:6px}
+.toast{position:fixed;left:50%;top:calc(14px + env(safe-area-inset-top,0px));transform:translate(-50%,-16px);
+  background:var(--ink);color:var(--on);padding:11px 18px;border-radius:999px;font-weight:600;font-size:14.5px;
+  opacity:0;pointer-events:none;transition:.28s var(--ease);z-index:20;max-width:90vw;text-align:center}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+.loading{padding:60px 0;text-align:center;color:var(--ink2)}
+@media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header id="top"></header>
+  <main id="main"><div class="loading">Загружаю данные…</div></main>
+</div>
+<div class="tbar" id="tbar"></div>
+<nav class="nav"><div id="nav"></div></nav>
+<div class="backdrop" id="bd" data-act="close"></div>
+<div class="sheet" id="sheet" role="dialog" aria-modal="true"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ================= Telegram, тема, хранилище ================= */
+const tg = window.Telegram && window.Telegram.WebApp;
+const inTG = !!(tg && tg.initData);
+const ver = v => { try { return inTG && tg.isVersionAtLeast(v); } catch(e){ return false; } };
+if (tg) { try { tg.ready(); tg.expand(); } catch(e){} }
+const useCloud = !!(inTG && tg.CloudStorage && ver('6.9'));
+function applyTheme(){
+  const dark = inTG ? tg.colorScheme === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches;
+  document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+  const c = dark ? '#0f1012' : '#f0f0f1';
+  try { if (ver('6.9')) { tg.setHeaderColor(c); tg.setBackgroundColor(c); } } catch(e){}
+  try { if (ver('7.10')) tg.setBottomBarColor(dark ? '#1b1c1f' : '#ffffff'); } catch(e){}
+}
+applyTheme();
+try { if (inTG) tg.onEvent('themeChanged', applyTheme); } catch(e){}
+
+const store = {
+  get(keys){ return new Promise(res => {
+    if (!keys.length) return res({});
+    if (useCloud) tg.CloudStorage.getItems(keys, (err, v) => res(err ? {} : (v || {})));
+    else { const o = {}; keys.forEach(k => { try { o[k] = localStorage.getItem('ez_'+k) || ''; } catch(e){ o[k] = ''; } }); res(o); }
+  });},
+  set(k, v){ return new Promise(res => {
+    if (useCloud) tg.CloudStorage.setItem(k, v, err => res(!err));
+    else { try { localStorage.setItem('ez_'+k, v); res(true); } catch(e){ res(false); } }
+  });},
+  keys(){ return new Promise(res => {
+    if (useCloud) tg.CloudStorage.getKeys((err, ks) => res(err ? [] : (ks || [])));
+    else { const ks = []; try { for (let i = 0; i < localStorage.length; i++){ const k = localStorage.key(i); if (k.startsWith('ez_')) ks.push(k.slice(3)); } } catch(e){} res(ks); }
+  });},
+  del(keys){ return new Promise(res => {
+    if (!keys.length) return res(true);
+    if (useCloud) tg.CloudStorage.removeItems(keys, err => res(!err));
+    else { keys.forEach(k => { try { localStorage.removeItem('ez_'+k); } catch(e){} }); res(true); }
+  });}
+};
+async function getMany(keys){ const o = {}; for (let i = 0; i < keys.length; i += 20) Object.assign(o, await store.get(keys.slice(i, i+20))); return o; }
+async function delMany(keys){ for (let i = 0; i < keys.length; i += 20) await store.del(keys.slice(i, i+20)); }
+const haptic = t => { try { if (ver('6.1')) tg.HapticFeedback.notificationOccurred(t); } catch(e){} };
+const tick = () => { try { if (ver('6.1')) tg.HapticFeedback.selectionChanged(); } catch(e){} };
+
+/* ================= утилиты ================= */
+const $ = s => document.querySelector(s);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pad = n => String(n).padStart(2, '0');
+const ymd = d => d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+const parseYmd = s => { const [y,m,d] = s.split('-').map(Number); return new Date(y, m-1, d); };
+const addDays = (s, n) => { const d = parseYmd(s); d.setDate(d.getDate()+n); return ymd(d); };
+const today = () => ymd(new Date());
+const daysBetween = (a, b) => Math.round((parseYmd(b) - parseYmd(a)) / 864e5);
+const MON = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+const DWL = ['Воскресенье','Понедельник','Вторник','Среда','Четверг','Пятница','Суббота'];
+const fmtDay = s => { const d = parseYmd(s); return d.getDate()+' '+MON[d.getMonth()]; };
+const plural = (n, a, b, c) => { n = Math.abs(n) % 100; const n1 = n % 10; if (n > 10 && n < 20) return c; if (n1 > 1 && n1 < 5) return b; if (n1 === 1) return a; return c; };
+const avg = (arr, f) => arr.length ? arr.reduce((s, x) => s + (+f(x) || 0), 0) / arr.length : 0;
+const tMin = s => { const [h, m] = s.split(':').map(Number); return h*60 + m; };
+const tStr = m => { m = ((m % 1440) + 1440) % 1440; return pad(Math.floor(m/60))+':'+pad(m%60); };
+const sleepHours = (bed, wake) => Math.round(((tMin(wake) - tMin(bed) + 1440) % 1440) / 60 * 4) / 4;
+const fmtH = h => (Math.round(h*10)/10).toString().replace('.', ',');
+const clock = ms => { const s = Math.floor(ms/1000), h = Math.floor(s/3600), m = Math.floor(s%3600/60); return (h ? h+':'+pad(m) : m)+':'+pad(s%60); };
+const nowHM = () => { const d = new Date(); return pad(d.getHours())+':'+pad(d.getMinutes()); };
+const shuffle = a => { a = a.slice(); for (let i = a.length-1; i > 0; i--){ const j = Math.floor(Math.random()*(i+1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const cap = s => s ? s[0].toUpperCase() + s.slice(1) : s;
+function toast(t){ const el = $('#toast'); el.textContent = t; el.classList.add('show'); clearTimeout(toast.t); toast.t = setTimeout(() => el.classList.remove('show'), 2200); }
+
+/* ================= темы курса ================= */
+const MODULES = [
+ { n:1, short:'Потребитель и спрос', t:'Теория потребительского поведения и спроса', items:[
+  ['1.1','Рыночный спрос','Функция и закон спроса, индивидуальный и рыночный спрос'],
+  ['1.2','Нефункциональный спрос','Лейбенстайн: эффект сноба, эффект Веблена, эффект присоединения к большинству, спекулятивный спрос'],
+  ['1.3','Парадоксы спроса','Товары Гиффена и статусные блага'],
+  ['1.4','Теория полезности','Кардиналистский и ординалистский подходы, I и II законы Госсена'],
+  ['1.5','Моделирование выбора','Кривые безразличия, бюджетное ограничение, MRS'],
+  ['1.6','Эффекты изменения цен','Эффект дохода и эффект замещения по Слуцкому и по Хиксу']]},
+ { n:2, short:'Равновесие и эластичность', t:'Рыночное равновесие, эластичность и госрегулирование', items:[
+  ['2.1','Механизм равновесия','Адаптация равновесия по Вальрасу и по Маршаллу'],
+  ['2.2','Теория эластичности','По цене, по доходу, перекрёстная; точечная и дуговая'],
+  ['2.3','Выручка и эластичность','Связь эластичности спроса с TR и MR'],
+  ['2.4','Общественное благосостояние','Излишек потребителя (CS) и производителя (PS)'],
+  ['2.5','Государственное вмешательство','Потолки и полы цен, налоги и субсидии, DWL']]},
+ { n:3, short:'Производство и издержки', t:'Теория производства и издержки фирмы', items:[
+  ['3.1','Производственная функция','Закон убывающей предельной производительности, связь TP, AP и MP'],
+  ['3.2','Графики производства','Изокванты, изокосты, MRTS, траектория развития фирмы'],
+  ['3.3','Прибыль и издержки','Явные, неявные и невозвратные издержки; бухгалтерская и экономическая прибыль'],
+  ['3.4','Краткосрочные издержки','FC, VC, TC, ATC, AVC, AFC и MC'],
+  ['3.5','Долгосрочные издержки','Эффект масштаба, LAC, минимально эффективный масштаб (MES)']]},
+ { n:4, short:'Структуры рынка', t:'Структуры рынка: конкуренция, монополия, олигополия', items:[
+  ['4.1','Совершенная конкуренция','Равновесие P = MR = MC, условие закрытия P < min AVC'],
+  ['4.2','Чистая монополия','Правило MR = MC, X-неэффективность Лейбенстайна'],
+  ['4.3','Ценовая дискриминация','1-й, 2-й и 3-й степени'],
+  ['4.4','Естественная монополия','Причины, регулирование P = MC и P = AC, двухставочный тариф'],
+  ['4.5','Монополистическая конкуренция','Дифференциация продукта, краткосрочное и долгосрочное равновесие, избыточная мощность'],
+  ['4.6','Олигополия','Модель Курно, ломаная кривая спроса Суизи, картели и сговор'],
+  ['4.7','Оценка рыночной власти','Индекс Лернера и индекс Херфиндаля — Хиршмана']]},
+ { n:5, short:'Рынки факторов', t:'Рынки факторов производства: труд, капитал, земля', items:[
+  ['5.1','Спрос на ресурсы','Производный характер спроса, MRP и MRC'],
+  ['5.2','Рынок труда','Правило MRP = MRC, монопсония, профсоюзы, двусторонняя монополия'],
+  ['5.3','Рынок капитала','Сбережения и инвестиции, временное предпочтение, дисконтирование'],
+  ['5.4','Оценка инвестиций','NPV и IRR'],
+  ['5.5','Рынок земли','Неэластичное предложение, абсолютная и дифференциальная рента I и II, цена земли']]},
+ { n:6, short:'Риск и информация', t:'Неопределённость, риск и асимметрия информации', items:[
+  ['6.1','Поведение в условиях риска','Отношение к риску, ожидаемая полезность, диверсификация, объединение риска, страхование'],
+  ['6.2','Неблагоприятный отбор','Доконтрактная асимметрия, «рынок лимонов» Акерлофа'],
+  ['6.3','Моральный риск','Постконтрактная асимметрия, проблема «принципал — агент»'],
+  ['6.4','Преодоление асимметрии','Рыночные сигналы (репутация, дипломы, гарантии) и скрининг']]},
+ { n:7, short:'Провалы рынка', t:'Провалы рынка, экстерналии и общественные блага', items:[
+  ['7.1','Эффективность по Парето','В производстве, обмене и структуре выпуска'],
+  ['7.2','Внешние эффекты','Положительные и отрицательные экстерналии, общественные и частные издержки и выгоды'],
+  ['7.3','Регулирование экстерналий','Налоги и субсидии Пигу, теорема Коуза, права собственности'],
+  ['7.4','Общественные блага','Неисключаемость, несоперничество, проблема безбилетника, агрегирование спроса'],
+  ['7.5','Теория общественного выбора','Провалы государства, парадокс Кондорсе, логроллинг']]}
+];
+const ALL = MODULES.flatMap(m => m.items.map(it => ({ id: it[0], name: it[1], desc: it[2], mod: m.n })));
+const byId = Object.fromEntries(ALL.map(x => [x.id, x]));
+const modOf = id => +id.split('.')[0];
+const qKey = id => 'q_'+id.replace('.', '_');
+
+/* ================= справочники ================= */
+const PRESETS = [
+  { k:'top',   t:'Бодр и собран',  v:[8,8,8,3] },
+  { k:'ok',    t:'Нормально',      v:[6,6,6,4] },
+  { k:'tired', t:'Устал, но могу', v:[5,3,5,4] },
+  { k:'anx',   t:'Тревожно',       v:[4,5,3,8] },
+  { k:'empty', t:'Выжат',          v:[3,2,2,6] }
+];
+const PRESET_NAME = Object.fromEntries(PRESETS.map(p => [p.k, p.t]));
+const WORDS = {
+  mood: ['ужасно','плохо','нормально','хорошо','отлично'],
+  en:   ['нет сил','вяло','средне','бодро','на максимуме'],
+  foc:  ['не могу собраться','отвлекаюсь','средне','собран','в потоке'],
+  st:   ['спокоен','чуть волнуюсь','ощутимо','сильно','паника']
+};
+const word = (k, v) => WORDS[k][Math.min(4, Math.floor((v-1)/2))];
+const PARA = [
+  ['calm','Спокойная ночь'], ['move','Дёргался, двигался'], ['talk','Говорил во сне'], ['dream','Кошмары'],
+  ['wake','Просыпался ночью'], ['paral','Сонный паралич'], ['walk','Ходил во сне'], ['teeth','Скрипел зубами'], ['unk','Не знаю']
+];
+const PARA_NAME = Object.fromEntries(PARA);
+const episode = e => (e.para || []).some(p => p !== 'calm' && p !== 'unk');
+const knownNight = e => (e.para || []).some(p => p !== 'unk');
+const FACTORS = [
+  { k:'sport', t:'Спорт или прогулка' }, { k:'fresh', t:'Свежий воздух' }, { k:'coffee', t:'Кофе или энергетик' },
+  { k:'phone', t:'Много телефона' }, { k:'social', t:'Общался с людьми' }, { k:'late', t:'Экран перед сном' }
+];
+const FOOD = { 2:'Ел нормально', 1:'Ел перекусами', '-1':'Почти не ел' };
+const Q_LABEL = { 1:'не понял', 2:'частично', 3:'понял' };
+
+/* ================= состояние ================= */
+let cfg = { exam:'', goal:90 };
+let status = {}, entries = {}, results = {}, plan = [], qidx = {};
+let timer = null;
+let tab = 'today', backTab = 'today', studyView = 'topics', cur = today(), draft = null;
+let pick = null, sheet = null, openMod = null, openTop = {}, sleepEdit = false, showExport = false;
+let fb = null, sugg = null, quiz = null, logPick = null;
+
+/* ================= записи дней ================= */
+function lastEntry(before){ const ks = Object.keys(entries).filter(k => k < before).sort(); return ks.length ? entries[ks[ks.length-1]] : null; }
+function blank(d){
+  const p = lastEntry(d);
+  const f = p && p.f ? Object.assign({}, p.f) : {};
+  return { v:3, bed:(p && p.bed) || '23:30', wake:(p && p.wake) || '07:30', sleep:0, sc:false, sq:0, para:[], state:'',
+    mood:5, en:5, foc:5, st:5, am:false, sess:[], min:0, tp:[], food:0, f, fCopied:Object.values(f).some(Boolean), note:'' };
+}
+function migrate(e){
+  if (e.v === 3) return e;
+  if (e.v !== 2) e = { v:2, sleep:e.sleep || 7, sq:e.sq || 3, mood:(e.mood||3)*2, en:(e.en||3)*2, foc:null, st:(e.st||3)*2, min:e.min || 0, tp:[], f:e.f || {}, note:e.note || '' };
+  const tp = e.tp || [], min = e.min || 0;
+  const sess = tp.length ? tp.map(t => ({ t, m:Math.max(1, Math.round(min/tp.length)), q:null })) : (min ? [{ t:null, m:min, q:null }] : []);
+  let bed = e.bed, wake = e.wake; if (!bed){ wake = '07:30'; bed = tStr(tMin(wake) - Math.round((e.sleep || 7)*60)); }
+  return { v:3, bed, wake, sleep:e.sleep || 7, sc:true, sq:e.sq >= 4 ? 5 : e.sq <= 2 ? 1 : 3, para:[], state:'',
+    mood:e.mood || 5, en:e.en || 5, foc:e.foc == null ? 5 : e.foc, st:e.st || 5, am:true, sess, min, tp, food:e.f && e.f.food ? 2 : 0,
+    f:e.f || {}, fCopied:false, note:e.note || '' };
+}
+const filled = e => e && (e.am || (e.sess && e.sess.length));
+function openDay(d){ cur = d; draft = entries[d] || blank(d); sleepEdit = false; }
+function entryFor(d){ if (d === cur) return draft; if (!entries[d]) entries[d] = blank(d); return entries[d]; }
+const saveTimers = {};
+function touch(d){
+  d = d || cur;
+  const e = entryFor(d); entries[d] = e;
+  e.sleep = sleepHours(e.bed, e.wake);
+  e.min = e.sess.reduce((s, x) => s + x.m, 0);
+  e.tp = [...new Set(e.sess.filter(x => x.t).map(x => x.t))];
+  clearTimeout(saveTimers[d]);
+  saveTimers[d] = setTimeout(() => store.set('d_'+d, JSON.stringify(e)), 400);
+}
+
+/* ================= загрузка ================= */
+async function load(){
+  const base = await store.get(['cfg','ts','timer','qidx','plan_n','r_1','r_2','r_3','r_4','r_5','r_6','r_7']);
+  const J = (s, def) => { try { return s ? JSON.parse(s) : def; } catch(e){ return def; } };
+  cfg = Object.assign(cfg, J(base.cfg, {}));
+  status = J(base.ts, {}) || {};
+  timer = J(base.timer, null);
+  qidx = J(base.qidx, {}) || {};
+  for (let m = 1; m <= 7; m++) Object.assign(results, J(base['r_'+m], {}));
+  const pn = +base.plan_n || 0;
+  if (pn){ const parts = await getMany(Array.from({length:pn}, (_, i) => 'plan_'+i)); plan = J(Array.from({length:pn}, (_, i) => parts['plan_'+i] || '').join(''), []); }
+  const ks = (await store.keys()).filter(k => k.startsWith('d_'));
+  const all = await getMany(ks);
+  for (const k in all){ try { if (all[k]) entries[k.slice(2)] = migrate(JSON.parse(all[k])); } catch(e){} }
+}
+const st = id => status[id] || 0;
+const saveStatus = () => store.set('ts', JSON.stringify(status));
+const lastStudied = id => { const ks = Object.keys(entries).filter(k => (entries[k].tp || []).includes(id)).sort(); return ks.length ? ks[ks.length-1] : null; };
+const sessions = id => Object.values(entries).reduce((s, e) => s + (e.sess || []).filter(x => x.t === id).length, 0);
+const goodSessions = id => Object.values(entries).reduce((s, e) => s + (e.sess || []).filter(x => x.t === id && x.q === 3).length, 0);
+const lastScore = id => { const r = results[id]; return r && r.length ? r[r.length-1][1] : null; };
+const planFor = d => plan.find(p => p.d === d);
+const doneOn = (d, id) => !!(entries[d] && (entries[d].tp || []).includes(id));
+
+/* ================= готовность и подсказки ================= */
+function readiness(e){
+  if (!e || !e.am) return null;
+  const h = e.sleep || sleepHours(e.bed, e.wake);
+  let sl = h >= 7 && h <= 9 ? 1 : h < 7 ? Math.max(0, 1 - (7-h)/4) : Math.max(.6, 1 - (h-9)/4);
+  if (episode(e)) sl *= .85;
+  const sq = e.sq || 3;
+  const parts = [[sl,.25], [(sq-1)/4,.15], [(e.mood-1)/9,.2], [(e.en-1)/9,.2], [(10-e.st)/9,.1], [(e.foc-1)/9,.1]];
+  return Math.round(100 * parts.reduce((s, p) => s + p[0]*p[1], 0));
+}
+function advice(r){
+  if (r >= 80) return ['Отличная форма', 'Бери самые сложные темы и задачи на графики.'];
+  if (r >= 60) return ['Рабочий режим', 'Новая тема плюс закрепление задачами.'];
+  if (r >= 40) return ['Сил средне', 'Повторение и задачи попроще, блоками по 25 минут.'];
+  return ['Тяжёлый день', 'Минимум: 20–30 минут лёгкого повторения и ранний сон.'];
+}
+function norm(except){
+  const ks = Object.keys(entries).filter(k => k !== except && k > addDays(today(), -15) && entries[k].am);
+  return ks.length >= 2 ? Math.round(avg(ks, k => readiness(entries[k]))) : null;
+}
+function suggestions(n){
+  const out = [], t = today(), add = id => { if (byId[id] && !out.includes(id)) out.push(id); };
+  const p = planFor(t); if (p) p.t.filter(id => !doneOn(t, id)).forEach(add);
+  ALL.filter(x => st(x.id) === 1).map(x => ({ id:x.id, ago: lastStudied(x.id) ? daysBetween(lastStudied(x.id), t) : 99 }))
+     .filter(o => o.ago >= 2).sort((a, b) => b.ago - a.ago).forEach(o => add(o.id));
+  ALL.filter(x => st(x.id) === 0).forEach(x => add(x.id));
+  return out.slice(0, n);
+}
+function why(id){
+  const p = planFor(today()); if (p && p.t.includes(id)) return 'по плану на сегодня';
+  if (st(id) === 0) return 'ещё не начата';
+  const l = lastStudied(id); if (!l) return 'в процессе';
+  const a = daysBetween(l, today()); return a === 0 ? 'занимался сегодня' : 'не повторял '+a+' '+plural(a,'день','дня','дней');
+}
+function nightText(e){
+  const p = e.para || [];
+  if (!p.length) return '';
+  if (p.includes('calm')) return 'спокойная ночь';
+  if (p.includes('unk')) return 'ночь: не знаю';
+  const n = p.map(k => PARA_NAME[k].toLowerCase());
+  return n.length > 2 ? n.slice(0, 2).join(', ')+' и ещё '+(n.length-2) : n.join(', ');
+}
+
+/* ================= SVG и иконки ================= */
+function ringSvg(val, r, sw){
+  const c = 2*Math.PI*r, s = r*2 + sw;
+  return `<svg viewBox="0 0 ${s} ${s}"><circle cx="${s/2}" cy="${s/2}" r="${r}" fill="none" stroke="var(--soft2)" stroke-width="${sw}"/>
+    <circle cx="${s/2}" cy="${s/2}" r="${r}" fill="none" stroke="var(--ink)" stroke-width="${sw}" stroke-linecap="round" stroke-dasharray="${c*Math.max(0, Math.min(1, val))} ${c}"/></svg>`;
+}
+const SVG = p => `<svg viewBox="0 0 24 24">${p}</svg>`;
+const ICON = {
+  today: SVG('<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>'),
+  study: SVG('<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>'),
+  stats: SVG('<path d="M5 20v-8M12 20V5M19 20v-5"/>'),
+  gear:  SVG('<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>'),
+  back:  SVG('<path d="M15 18l-6-6 6-6"/>'),
+  cal:   SVG('<rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/>'),
+  moon:  SVG('<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>'),
+  list:  SVG('<path d="M9 6h11M9 12h11M9 18h11"/><path d="M4.5 6l.5.5 1-1.5M4.5 12l.5.5 1-1.5M4.5 18l.5.5 1-1.5"/>')
+};
+const TABS = [['today','Сегодня'],['study','Учёба'],['stats','Прогресс']];
+const TITLES = { today:'Сегодня', study:'Учёба', stats:'Прогресс', set:'Настройки', quiz:'Тест' };
+
+/* ================= шапка, меню, плашка таймера ================= */
+function renderTop(){
+  const sub = tab === 'set' || tab === 'quiz';
+  const left = sub ? `<div class="tl"><button class="iconbtn" data-act="back" aria-label="Назад">${ICON.back}</button><div class="ptitle">${TITLES[tab]}</div></div>`
+                   : `<div class="ptitle">${TITLES[tab]}</div>`;
+  const right = sub ? '' : `<button class="iconbtn" data-act="gear" aria-label="Настройки">${ICON.gear}</button>`;
+  const t = today(), d = parseYmd(t);
+  let line = `${DWL[d.getDay()]}, ${fmtDay(t)}`;
+  if (cfg.exam){ const n = daysBetween(t, cfg.exam); line += n > 0 ? ` · ${n} ${plural(n,'день','дня','дней')} до пересдачи` : n === 0 ? ' · пересдача сегодня' : ''; }
+  else line += ` · <button data-act="gear">укажи дату пересдачи</button>`;
+  $('#top').innerHTML = `<div class="top">${left}${right}</div><div class="subline">${line}</div>`;
+  const act = sub ? backTab : tab;
+  $('#nav').innerHTML = TABS.map(([k, l]) => `<button class="tab ${act === k ? 'on' : ''}" data-act="tab" data-v="${k}"><span class="ic">${ICON[k]}</span>${l}</button>`).join('');
+}
+function renderBar(){
+  const show = !!timer && !(tab === 'today' && cur === today()) && tab !== 'quiz';
+  const el = $('#tbar');
+  el.classList.toggle('show', show);
+  document.body.classList.toggle('hasbar', show);
+  if (!show){ el.innerHTML = ''; return; }
+  el.innerHTML = `<span class="pulse" style="${timer.paused ? 'animation:none;opacity:.4' : ''}"></span>
+    <span class="tt"><b id="tbclock">${clock(elapsed())}</b>${timer.t ? timer.t+' '+esc(byId[timer.t].name) : 'Без темы'}</span>
+    <button data-act="tpause">${timer.paused ? 'Дальше' : 'Пауза'}</button><button data-act="tstop">Стоп</button>`;
+}
+
+/* ================= «Сегодня» ================= */
+function heroCard(){
+  const isToday = cur === today();
+  let h = '';
+  if (fb && fb.d === cur){
+    const s = entryFor(fb.d).sess[fb.i];
+    if (s && s.t) h += `<div class="banner"><b>Как зашла тема «${byId[s.t].name}»?</b>
+      <div class="opts o3">${[1,2,3].map(v => `<button class="opt" data-act="fb" data-v="${v}">${cap(Q_LABEL[v])}</button>`).join('')}</div></div>`;
+  }
+  if (sugg) h += `<div class="banner"><b>Тема «${byId[sugg].name}» уже хорошо заходит. Отметить как «уверен»?</b>
+      <div class="mini"><button class="dark" data-act="setst" data-v="${sugg}" data-s="2">Да</button><button data-act="nosugg">Позже</button></div></div>`;
+
+  if (isToday && timer){
+    const el = elapsed();
+    h += `<div class="tring" id="tring">${ringSvg(Math.min(1, el/1500000), 74, 9)}<div class="v"><div><b id="tclock">${clock(el)}</b><small>${timer.paused ? 'на паузе' : 'из 25 минут'}</small></div></div></div>
+      <div class="tname">${timer.t ? esc(byId[timer.t].name) : 'Занятие без темы'}</div>
+      <div class="tsub">${timer.t ? 'Тема '+timer.t+', начало в '+timer.s : 'Начало в '+timer.s}</div>
+      <button class="primary" data-act="tstop">Закончить и записать</button>
+      <div class="row2" style="grid-template-columns:1fr"><button data-act="tpause">${timer.paused ? 'Продолжить' : 'Пауза'}</button></div>`;
+  } else if (isToday){
+    const id = pick || suggestions(1)[0];
+    if (id){
+      h += `<div class="eyebrow">${pick ? 'Выбранная тема' : 'Следующая тема'}</div>
+        <div class="hname">${byId[id].name}</div><div class="hmeta">${id} · ${why(id)}</div>
+        <button class="primary" data-act="tstart" data-v="${id}">Начать 25 минут</button>
+        <div class="row2"><button data-act="sheet" data-v="pick">Выбрать другую</button><button data-act="sheet" data-v="log">Записать вручную</button></div>`;
+    } else {
+      h += `<div class="hname">Все темы пройдены</div><div class="hmeta">Повторяй слабые места и проходи тесты.</div>
+        <button class="primary" data-act="tstart" data-v="">Начать 25 минут</button>
+        <div class="row2"><button data-act="sheet" data-v="pick">Выбрать тему</button><button data-act="sheet" data-v="log">Записать вручную</button></div>`;
+    }
+  } else {
+    h += `<div class="eyebrow">Ты смотришь ${fmtDay(cur)}</div><div class="hname">Занятия за этот день</div>
+      <div class="hmeta">Можно дописать то, что не успел отметить.</div>
+      <button class="primary" data-act="sheet" data-v="log">Записать занятие</button>
+      <div class="row2" style="grid-template-columns:1fr"><button data-act="day" data-v="${today()}">Вернуться к сегодня</button></div>`;
+  }
+  return `<section class="card hero">${h}</section>`;
+}
+function dayCard(){
+  const pct = Math.min(100, Math.round(draft.min / (cfg.goal || 1) * 100));
+  const pl = planFor(cur);
+  const plDone = pl ? pl.t.filter(id => doneOn(cur, id)).length : 0;
+  return `<section class="card">
+    <div class="ch"><h2>${draft.min} из ${cfg.goal} мин</h2><button class="iconbtn" style="width:36px;height:36px;box-shadow:none;background:var(--soft)" data-act="sheet" data-v="cal" aria-label="Календарь">${ICON.cal}</button></div>
+    <div class="pbar"><div style="width:${pct}%"></div></div>
+    ${draft.sess.length ? `<div style="margin-top:8px">${draft.sess.map((s, i) => `<div class="sess"><span class="code">${s.t || '—'}</span>
+      <span class="nm">${s.t ? byId[s.t].name : 'Без темы'}<small>${s.m} мин${s.s ? ', с '+s.s : ''}${s.q ? ', '+Q_LABEL[s.q] : ''}</small></span>
+      <button class="x" data-act="delsess" data-v="${i}" aria-label="Удалить занятие">×</button></div>`).join('')}</div>` : `<p class="muted" style="margin-top:12px">Занятий пока нет.</p>`}
+    ${pl ? `<div class="lbl"><span>План${cur === today() ? ' на сегодня' : ''}</span><small>${plDone} из ${pl.t.length}${pl.f ? ' · '+esc(pl.f) : ''}</small></div>
+      <div class="chips">${pl.t.map(id => `<button class="chip ${doneOn(cur, id) ? 'on' : ''}" data-act="topic" data-v="${id}">${id} ${byId[id].name}</button>`).join('')}</div>` : ''}
+  </section>`;
+}
+function checkinCard(){
+  if (!draft.am) return `<section class="card"><button class="rowcard" data-act="sheet" data-v="checkin">
+    <span class="ic">${ICON.moon}</span><span class="tx"><b>Как ты сегодня?</b><small>Сон, ночь и самочувствие, около 10 секунд</small></span><span class="chev">›</span></button></section>`;
+  const r = readiness(draft), [ah, ap] = advice(r), nm = norm(cur);
+  const bits = [fmtH(sleepHours(draft.bed, draft.wake))+' ч сна', nightText(draft), (PRESET_NAME[draft.state] || '').toLowerCase()].filter(Boolean).join(' · ');
+  return `<section class="card"><button class="rowcard" data-act="sheet" data-v="checkin">
+    <span class="ring">${ringSvg(r/100, 23, 5)}<span class="v"><b>${r}</b></span></span>
+    <span class="tx"><b>${ah}${nm != null ? ` <small style="display:inline;font-weight:600">${r >= nm ? '↑' : '↓'} ${Math.abs(r-nm)} от нормы</small>` : ''}</b><small>${bits}</small><small>${ap}</small></span><span class="chev">›</span></button></section>`;
+}
+function eveningCard(){
+  const on = FACTORS.filter(f => draft.f[f.k]).map(f => f.t.toLowerCase());
+  const bits = [draft.food ? FOOD[draft.food] : '', ...on.slice(0, 2), on.length > 2 ? 'ещё '+(on.length-2) : '', draft.note ? 'есть заметка' : ''].filter(Boolean);
+  const any = draft.food || draft.note || on.length;
+  return `<section class="card"><button class="rowcard" data-act="sheet" data-v="evening">
+    <span class="ic">${ICON.list}</span><span class="tx"><b>Итог дня</b><small>${any ? cap(bits.join(' · ')) + (draft.fCopied && !draft.food ? ' (как вчера)' : '') : 'Еда, привычки и заметка'}</small></span><span class="chev">›</span></button></section>`;
+}
+function renderToday(){ return heroCard() + dayCard() + checkinCard() + eveningCard(); }
+
+/* ================= нижние панели ================= */
+function seg10(key, label){
+  const v = draft[key];
+  return `<div class="sc"><div class="sch"><span>${label}</span><small>${v} · ${word(key, v)}</small></div>
+    <div class="seg">${Array.from({length:10}, (_, i) => `<button class="${i < v ? 'f' : ''}" data-act="seg" data-k="${key}" data-v="${i+1}" aria-label="${label}: ${i+1} из 10"></button>`).join('')}</div></div>`;
+}
+function sheetCheckin(){
+  const hrs = sleepHours(draft.bed, draft.wake);
+  const W0 = 18*60, SPAN = 20*60, pos = m => Math.max(0, Math.min(1, ((((m - W0) % 1440) + 1440) % 1440) / SPAN));
+  const a = pos(tMin(draft.bed)), b = pos(tMin(draft.wake));
+  let sleep;
+  if (sleepEdit){
+    sleep = `<div class="times">
+      <div class="time"><small>Лёг</small><div class="tv"><button data-act="bed" data-v="-15" aria-label="Раньше">−</button><b>${draft.bed}</b><button data-act="bed" data-v="15" aria-label="Позже">+</button></div></div>
+      <div class="time"><small>Встал</small><div class="tv"><button data-act="wake" data-v="-15" aria-label="Раньше">−</button><b>${draft.wake}</b><button data-act="wake" data-v="15" aria-label="Позже">+</button></div></div></div>
+      <div class="night"><div class="fill" style="left:${Math.min(a,b)*100}%;width:${Math.abs(b-a)*100}%"></div><div class="nl">${fmtH(hrs)} ч сна</div></div>
+      <div class="ticks"><span>18</span><span>22</span><span>02</span><span>06</span><span>10</span><span>14</span></div>
+      <button class="secondary" style="margin:0" data-act="sleepok">Готово</button>`;
+  } else {
+    sleep = `<div class="confirm"><div>${draft.sc ? '' : '<small>Как вчера?</small>'}<b>${draft.bed} – ${draft.wake}</b><small>${fmtH(hrs)} ч сна</small></div>
+      <div class="mini">${draft.sc ? '' : '<button class="dark" data-act="sleepok">Да</button>'}<button data-act="sleepedit">Изменить</button></div></div>`;
+  }
+  return `<div class="stitle"><h2>Как ты сегодня?</h2><p class="muted">Всё сохраняется сразу</p></div>
+    <div class="lbl"><span>Сон</span></div>${sleep}
+    <div class="lbl"><span>Как спал</span></div>
+    <div class="opts o3">${[[1,'Плохо'],[3,'Нормально'],[5,'Хорошо']].map(([v, l]) => `<button class="opt ${draft.sq === v ? 'on' : ''}" data-act="sq" data-v="${v}">${l}</button>`).join('')}</div>
+    <div class="lbl"><span>Что было ночью</span><small>можно несколько</small></div>
+    <div class="chips">${PARA.map(([k, l]) => `<button class="chip ${k === 'unk' || k === 'calm' ? 'ghost' : ''} ${draft.para.includes(k) ? 'on' : ''}" data-act="para" data-v="${k}">${l}</button>`).join('')}</div>
+    <div class="lbl"><span>Состояние</span></div>
+    <div class="states">${PRESETS.map(p => `<button class="state ${draft.state === p.k ? 'on' : ''}" data-act="state" data-v="${p.k}">${p.t}</button>`).join('')}</div>
+    ${draft.state ? `<p class="muted" style="margin-top:14px">Подправь, если не совсем так</p>${seg10('mood','Настроение')}${seg10('en','Энергия')}${seg10('foc','Концентрация')}${seg10('st','Тревога из-за экзамена')}` : ''}
+    <button class="primary" style="margin-top:20px" data-act="close">Готово</button>`;
+}
+function sheetEvening(){
+  return `<div class="stitle"><h2>Итог дня</h2><p class="muted">${draft.fCopied ? 'Привычки перенесены со вчера, поменяй, если было иначе' : 'Отметь, что было сегодня'}</p></div>
+    <div class="lbl"><span>Как ел</span></div>
+    <div class="opts o3">${[[2,'Нормально'],[1,'Перекусами'],[-1,'Почти не ел']].map(([v, l]) => `<button class="opt ${draft.food === v ? 'on' : ''}" data-act="food" data-v="${v}">${l}</button>`).join('')}</div>
+    <div class="lbl"><span>Что было сегодня</span></div>
+    <div class="tiles">${FACTORS.map(f => `<button class="tile ${draft.f[f.k] ? 'on' : ''}" data-act="f" data-v="${f.k}">${f.t}</button>`).join('')}</div>
+    <div class="lbl"><span>Заметка</span><small>по желанию</small></div>
+    <textarea class="field" id="note" maxlength="500" placeholder="Что помогло или помешало заниматься?">${esc(draft.note)}</textarea>
+    <button class="primary" style="margin-top:16px" data-act="close">Готово</button>`;
+}
+function topicList(sel, act){
+  const sg = suggestions(4);
+  const mods = MODULES.map(m => {
+    const open = openMod === m.n;
+    return `<div style="border-top:1px solid var(--line)"><button class="trow" style="border:0" data-act="mod" data-v="${m.n}"><span class="code">${m.n}</span><span class="tx"><b>${m.short}</b></span><span style="color:var(--ink3);transform:rotate(${open ? 90 : 0}deg);transition:transform .2s">›</span></button>
+      ${open ? m.items.map(it => `<button class="trow" data-act="${act}" data-v="${it[0]}" style="padding-left:12px"><span class="code">${it[0]}</span><span class="tx"><b>${it[1]}</b></span><span class="dot ${sel === it[0] ? 's2' : ''}">${sel === it[0] ? '✓' : ''}</span></button>`).join('') : ''}</div>`;
+  }).join('');
+  return `<div class="lbl"><span>Предлагаю</span></div>
+    ${sg.map(id => `<button class="trow" data-act="${act}" data-v="${id}"><span class="code">${id}</span><span class="tx"><b>${byId[id].name}</b><small>${why(id)}</small></span><span class="dot ${sel === id ? 's2' : ''}">${sel === id ? '✓' : ''}</span></button>`).join('')}
+    <div class="lbl"><span>Все темы</span></div>${mods}`;
+}
+function sheetPick(){ return `<div class="stitle"><h2>Выбери тему</h2></div>${topicList(pick, 'pickset')}`; }
+function sheetLog(){
+  return `<div class="stitle"><h2>Записать занятие</h2><p class="muted">${cur === today() ? 'Для занятий без таймера' : 'За '+fmtDay(cur)}</p></div>
+    <div class="lbl"><span>Сколько занимался</span><small>${logPick ? logPick+' '+byId[logPick].name : 'тема не выбрана'}</small></div>
+    <div class="chips">${[15,30,45,60,90].map(m => `<button class="chip" data-act="addmin" data-v="${m}">${m} мин</button>`).join('')}</div>
+    ${topicList(logPick, 'logset')}`;
+}
+function sheetTopic(id){
+  const x = byId[id], s = st(id), n = sessions(id), l = lastStudied(id), sc = lastScore(id), isToday = cur === today();
+  const info = [n ? n+' '+plural(n,'занятие','занятия','занятий')+', последнее '+fmtDay(l) : 'Ещё не занимался', sc != null ? 'тест '+sc+'%' : ''].filter(Boolean).join(' · ');
+  return `<div class="stitle"><p class="muted">${x.id} · ${MODULES[x.mod-1].short}</p><h2>${x.name}</h2></div>
+    <p style="margin:8px 0 6px;font-size:15px">${x.desc}</p><p class="muted">${info}</p>
+    <div class="lbl"><span>Статус</span></div>
+    <div class="opts o3">${[[0,'Не начато'],[1,'В процессе'],[2,'Уверен']].map(([v, l]) => `<button class="opt ${s === v ? 'on' : ''}" data-act="setst" data-v="${id}" data-s="${v}">${l}</button>`).join('')}</div>
+    <div style="height:18px"></div>
+    ${!timer ? `<button class="primary" data-act="tstart" data-v="${id}">Начать 25 минут</button>` : ''}
+    ${qidx[id] ? `<button class="secondary" data-act="quiz" data-v="${id}">Пройти тест · ${qidx[id]} ${plural(qidx[id],'вопрос','вопроса','вопросов')}</button>` : ''}
+    <button class="secondary" data-act="logtopic" data-v="${id}">Записать занятие вручную</button>`;
+}
+function sheetCal(){
+  const t = today(), ws = weekStart(t), start = addDays(ws, -21);
+  const days = Array.from({length:28}, (_, i) => addDays(start, i));
+  return `<div class="stitle"><h2>Выбери день</h2><p class="muted">Точка значит, что день заполнен</p></div>
+    <div class="cal" style="margin-top:14px">${['пн','вт','ср','чт','пт','сб','вс'].map(d => `<span class="wd">${d}</span>`).join('')}
+    ${days.map(d => `<button class="${d === cur ? 'on' : ''} ${filled(entries[d]) ? 'has' : ''} ${d === cfg.exam ? 'exam' : ''}" data-act="day" data-v="${d}" ${d > t ? 'disabled' : ''}>${parseYmd(d).getDate()}</button>`).join('')}</div>
+    ${cur !== t ? `<button class="secondary" style="margin-top:14px" data-act="day" data-v="${t}">Вернуться к сегодня</button>` : ''}`;
+}
+let sheetWasOpen = false;
+function renderSheet(){
+  const el = $('#sheet'), bd = $('#bd');
+  if (!sheet){
+    el.classList.remove('open'); bd.classList.remove('open'); document.body.style.overflow = '';
+    sheetWasOpen = false; return;
+  }
+  const keep = el.scrollTop;
+  const k = sheet.k;
+  el.innerHTML = '<div class="handle"></div>' + (k === 'checkin' ? sheetCheckin() : k === 'evening' ? sheetEvening() : k === 'pick' ? sheetPick()
+    : k === 'log' ? sheetLog() : k === 'topic' ? sheetTopic(sheet.id) : sheetCal());
+  if (sheetWasOpen) el.scrollTop = keep; else el.scrollTop = 0;
+  document.body.style.overflow = 'hidden';
+  if (!sheetWasOpen){ requestAnimationFrame(() => { el.classList.add('open'); bd.classList.add('open'); }); sheetWasOpen = true; }
+}
+
+/* ================= «Учёба» ================= */
+const barHtml = ids => `<div class="bar">${ids.map(id => `<i class="s${st(id)}"></i>`).join('')}</div>`;
+function topicRow(id){
+  const x = byId[id], s = st(id), sc = lastScore(id);
+  return `<button class="trow" data-act="topic" data-v="${id}"><span class="code">${id}</span><span class="tx"><b>${x.name}</b><small>${x.desc}</small></span>
+    ${sc != null ? `<span class="sc2">${sc}%</span>` : ''}<span class="dot s${s}">${s === 2 ? '✓' : ''}</span></button>`;
+}
+function studyTopics(){
+  const done = ALL.filter(x => st(x.id) === 2).length, prog = ALL.filter(x => st(x.id) === 1).length;
+  return `<section class="card">
+    <div class="big"><b>${done}</b><span class="muted">из ${ALL.length} подтем освоено${prog ? ', '+prog+' в процессе' : ''}</span></div>
+    ${barHtml(ALL.map(x => x.id))}
+    <div class="legend"><span>не начато</span><span class="l1">в процессе</span><span class="l2">уверен</span></div>
+  </section>
+  ${MODULES.map(m => {
+    const ids = m.items.map(it => it[0]), d = ids.filter(id => st(id) === 2).length, open = openTop[m.n];
+    return `<section class="card"><button class="mtop" data-act="mtop" data-v="${m.n}"><div class="row1"><b>${m.n}. ${m.t}</b><small>${d} из ${ids.length} ${open ? '▴' : '▾'}</small></div>${barHtml(ids)}</button>
+      ${open ? `<div class="tlist">${ids.map(topicRow).join('')}</div>` : ''}</section>`;
+  }).join('')}`;
+}
+function studyPlan(){
+  if (!plan.length) return `<section class="card"><div class="ch"><h2>Плана пока нет</h2></div>
+    <p class="muted">Составь план в NotebookLM и вставь ответ в настройки. Темы на каждый день появятся здесь и на главном экране.</p>
+    <button class="secondary" style="margin-top:14px" data-act="gear">Открыть импорт</button></section>`;
+  const t = today();
+  return `<section class="card">${plan.map(p => {
+    const done = p.t.filter(id => doneOn(p.d, id)).length;
+    return `<div class="pday ${p.d === t ? 'today' : p.d < t ? 'past' : ''}"><div class="ph"><b>${fmtDay(p.d)}</b><small>${p.f ? esc(p.f)+' · ' : ''}${done} из ${p.t.length}</small></div>
+      <div class="chips">${p.t.map(id => `<button class="chip ${doneOn(p.d, id) ? 'on' : ''}" data-act="topic" data-v="${id}">${id} ${byId[id].name}</button>`).join('')}</div></div>`;
+  }).join('')}</section>`;
+}
+function studyTests(){
+  const ids = ALL.map(x => x.id).filter(id => qidx[id]);
+  if (!ids.length) return `<section class="card"><div class="ch"><h2>Тестов пока нет</h2></div>
+    <p class="muted">Сгенерируй тесты в NotebookLM по модулям и вставь ответ в настройки. Каждый модуль загружается отдельно.</p>
+    <button class="secondary" style="margin-top:14px" data-act="gear">Открыть импорт</button></section>`;
+  const tested = ids.filter(id => lastScore(id) != null);
+  return `<section class="card"><div class="big"><b>${tested.length ? Math.round(avg(tested, lastScore))+'%' : '–'}</b><span class="muted">средний результат, пройдено ${tested.length} из ${ids.length}</span></div></section>
+    ${MODULES.filter(m => m.items.some(it => qidx[it[0]])).map(m => `<section class="card"><div class="ch"><h2>${m.n}. ${m.short}</h2></div>
+      ${m.items.filter(it => qidx[it[0]]).map(it => { const id = it[0], sc = lastScore(id);
+        return `<button class="trow" data-act="quiz" data-v="${id}"><span class="code">${id}</span><span class="tx"><b>${it[1]}</b><small>${qidx[id]} ${plural(qidx[id],'вопрос','вопроса','вопросов')}${sc != null ? ', последний результат '+sc+'%' : ''}</small></span><span class="sc2">${sc == null ? 'Начать' : 'Ещё раз'} ›</span></button>`; }).join('')}</section>`).join('')}`;
+}
+function renderStudy(){
+  return `<div class="switch">${[['topics','Темы'],['plan','План'],['tests','Тесты']].map(([k, l]) => `<button class="${studyView === k ? 'on' : ''}" data-act="sview" data-v="${k}">${l}</button>`).join('')}</div>
+    ${studyView === 'topics' ? studyTopics() : studyView === 'plan' ? studyPlan() : studyTests()}`;
+}
+
+/* ================= тест ================= */
+function renderQuiz(){
+  const q = quiz, name = byId[q.id].name;
+  if (q.done){
+    const pct = Math.round(q.right / q.qs.length * 100);
+    return `<section class="card" style="text-align:center"><p class="muted">${q.id} ${name}</p>
+      <div class="ring" style="width:120px;height:120px;margin:18px auto">${ringSvg(pct/100, 52, 9)}<div class="v"><div><b style="font-size:30px">${pct}%</b><small>${q.right} из ${q.qs.length}</small></div></div></div>
+      <p style="margin:0 0 16px">${pct >= 80 ? 'Тема держится крепко.' : pct >= 50 ? 'Основа есть, повтори ошибки.' : 'Стоит разобрать тему ещё раз.'}</p>
+      ${pct >= 80 && st(q.id) < 2 ? `<button class="primary" data-act="setst" data-v="${q.id}" data-s="2">Отметить тему как «уверен»</button>` : ''}
+      <button class="secondary" data-act="quiz" data-v="${q.id}">Пройти ещё раз</button>
+      <button class="secondary" data-act="back">Вернуться</button></section>`;
+  }
+  const it = q.qs[q.i], answered = q.pick != null;
+  return `<section class="card">
+    <div class="ch"><h2>${q.id} ${name}</h2><small>${q.i+1} из ${q.qs.length}</small></div>
+    <div class="qprog">${q.qs.map((_, i) => `<i class="${i < q.i + (answered ? 1 : 0) ? 'f' : ''}"></i>`).join('')}</div>
+    <p class="qtext">${esc(it.q)}</p>
+    ${it.o.map((o, i) => { let c = ''; if (answered){ if (i === it.a) c = 'right'; else if (i === q.pick) c = 'wrong'; }
+      return `<button class="qo ${c}" data-act="ans" data-v="${i}" ${answered ? 'disabled' : ''}><span class="mk">${answered && i === it.a ? '✓' : answered && i === q.pick ? '✕' : String.fromCharCode(1040+i)}</span><span>${esc(o)}</span></button>`; }).join('')}
+    ${answered ? `${it.e ? `<div class="expl">${esc(it.e)}</div>` : ''}<button class="primary" data-act="qnext">${q.i + 1 < q.qs.length ? 'Дальше' : 'Результат'}</button>` : ''}
+  </section>`;
+}
+
+/* ================= «Прогресс» ================= */
+function weekStart(d){ const dt = parseYmd(d); return addDays(d, -((dt.getDay()+6)%7)); }
+function lineChart(a, b){
+  const W = 330, H = 150, pl = 8, pr = 8, pt = 10, pb = 22, ph = H-pt-pb, step = (W-pl-pr)/6;
+  const X = i => pl + i*step, Y = v => pt + ph - ph*v/100;
+  const path = arr => { let s = '', pen = false; arr.forEach((v, i) => { if (v == null){ pen = false; return; } s += (pen ? 'L' : 'M')+X(i).toFixed(1)+' '+Y(v).toFixed(1)+' '; pen = true; }); return s; };
+  let s = `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Готовность по дням недели">`;
+  [0, 50, 100].forEach(v => s += `<line class="gl" x1="${pl}" x2="${W-pr}" y1="${Y(v)}" y2="${Y(v)}"/>`);
+  s += `<path d="${path(b)}" fill="none" stroke="var(--ink3)" stroke-width="1.8" stroke-dasharray="4 4"/>`;
+  s += `<path d="${path(a)}" fill="none" stroke="var(--ink)" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>`;
+  a.forEach((v, i) => { if (v != null) s += `<circle cx="${X(i)}" cy="${Y(v)}" r="3.6" fill="var(--card)" stroke="var(--ink)" stroke-width="2"/>`; });
+  ['пн','вт','ср','чт','пт','сб','вс'].forEach((l, i) => s += `<text class="ax" x="${X(i)}" y="${H-6}" text-anchor="middle">${l}</text>`);
+  return s + '</svg>';
+}
+function barChart(days, vals, max, goal){
+  const W = 330, H = 130, pt = 8, pb = 20, ph = H-pt-pb, n = days.length, bw = W/n;
+  let s = `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Минуты занятий">`;
+  if (goal){ const y = pt + ph - ph*Math.min(goal/max, 1); s += `<line class="goal" x1="0" x2="${W}" y1="${y}" y2="${y}"/>`; }
+  days.forEach((d, i) => {
+    const v = vals[i], x = i*bw + bw*.2, w = bw*.6;
+    if (!v) s += `<rect x="${x}" y="${pt+ph-3}" width="${w}" height="3" rx="1.5" fill="var(--soft2)"/>`;
+    else { const h = Math.max(3, ph*Math.min(v/max, 1)); s += `<rect x="${x}" y="${pt+ph-h}" width="${w}" height="${h}" rx="5" fill="var(--ink)"/>`; }
+    if ((n-1-i) % 2 === 0) s += `<text class="ax" x="${i*bw+bw/2}" y="${H-5}" text-anchor="middle">${parseYmd(d).getDate()}</text>`;
+  });
+  return s + '</svg>';
+}
+function insights(ks){
+  const E = ks.map(k => entries[k]);
+  if (E.length < 4) return null;
+  const tests = [
+    { fn:e => e.sleep >= 7,         a:'ты спишь 7+ часов',        b:'спишь меньше' },
+    { fn:e => e.sq >= 5,            a:'спишь хорошо',             b:'сон так себе' },
+    { fn:e => !episode(e),          a:'ночь спокойная',           b:'ночью были эпизоды' },
+    { fn:e => e.f && e.f.sport,     a:'есть спорт или прогулка',  b:'нет движения' },
+    { fn:e => e.f && e.f.fresh,     a:'бываешь на воздухе',       b:'сидишь в помещении' },
+    { fn:e => e.food === 2,         a:'нормально ешь',            b:'ешь как попало' },
+    { fn:e => e.f && e.f.coffee,    a:'пьёшь кофе или энергетики',b:'обходишься без них' },
+    { fn:e => e.f && e.f.phone,     a:'много сидишь в телефоне',  b:'телефона мало' },
+    { fn:e => e.st <= 4,            a:'тревога низкая',           b:'тревога высокая' }
+  ];
+  const out = [];
+  tests.forEach(t => {
+    const A = E.filter(t.fn), B = E.filter(e => !t.fn(e));
+    if (A.length < 2 || B.length < 2) return;
+    const mA = avg(A, e => e.min), mB = avg(B, e => e.min), rA = avg(A, readiness), rB = avg(B, readiness);
+    const mag = Math.abs(mA-mB)/Math.max(mA, mB, 1) + Math.abs(rA-rB)/100;
+    if (mag < .12) return;
+    const up = mA + rA/2 >= mB + rB/2;
+    out.push({ mag, html:`<div class="ins"><span class="tag ${up ? 'dark' : ''}">${up ? '↑ помогает' : '↓ мешает'}</span><br>
+      Когда ${t.a}, ты занимаешься в среднем <b>${Math.round(mA)} мин</b> с готовностью <b>${Math.round(rA)}</b>. Когда ${t.b}: <b>${Math.round(mB)} мин</b> и <b>${Math.round(rB)}</b>.</div>` });
+  });
+  const buckets = [['меньше 6 ч', e => e.sleep < 6], ['6–7 ч', e => e.sleep >= 6 && e.sleep < 7], ['7–8 ч', e => e.sleep >= 7 && e.sleep < 8], ['8 ч и больше', e => e.sleep >= 8]]
+    .map(([l, f]) => { const g = E.filter(f); return { l, n:g.length, m:avg(g, e => e.min) }; }).filter(x => x.n >= 2);
+  if (buckets.length >= 2){
+    const best = buckets.reduce((a, b) => b.m > a.m ? b : a);
+    out.push({ mag:5, html:`<div class="ins"><span class="tag dark">Твой оптимальный сон</span><br>Продуктивнее всего ты после сна <b>${best.l}</b>: в среднем ${Math.round(best.m)} мин занятий.</div>` });
+  }
+  return out.sort((x, y) => y.mag - x.mag).slice(0, 5).map(o => o.html).join('');
+}
+function nightInsight(ks){
+  const K = ks.filter(k => knownNight(entries[k]));
+  if (K.length < 3) return `<p class="muted">Отмечай, что было ночью, хотя бы 3 ночи${K.length ? ', сейчас '+K.length : ''}. Тогда я сравню ночи с эпизодами и спокойные.</p>`;
+  const A = K.filter(k => episode(entries[k])), B = K.filter(k => !episode(entries[k]));
+  const types = {}; A.forEach(k => entries[k].para.forEach(p => { if (p !== 'calm' && p !== 'unk') types[p] = (types[p] || 0) + 1; }));
+  const top = Object.entries(types).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([p, n]) => PARA_NAME[p].toLowerCase()+' ('+n+')').join(', ');
+  let html = `<div class="ins">Эпизоды были в <b>${A.length} из ${K.length}</b> ${plural(K.length,'ночи','ночей','ночей')}${top ? ': '+top : ''}.</div>`;
+  const prevSt = k => { const p = entries[addDays(k, -1)]; return p && p.am ? p.st : null; };
+  if (A.length >= 2 && B.length >= 2){
+    const sA = A.map(prevSt).filter(v => v != null), sB = B.map(prevSt).filter(v => v != null);
+    html += `<div class="ins"><span class="tag dark">Сон</span><br>Ночи с эпизодами: в среднем <b>${fmtH(avg(A, k => entries[k].sleep))} ч</b> сна, спокойные: <b>${fmtH(avg(B, k => entries[k].sleep))} ч</b>.</div>`;
+    if (sA.length >= 2 && sB.length >= 2) html += `<div class="ins"><span class="tag dark">Тревога накануне</span><br>Перед ночами с эпизодами тревога была <b>${fmtH(avg(sA, v => v))}</b> из 10, перед спокойными <b>${fmtH(avg(sB, v => v))}</b>.</div>`;
+    const cA = A.map(k => entries[addDays(k, -1)]).filter(e => e && e.f), cB = B.map(k => entries[addDays(k, -1)]).filter(e => e && e.f);
+    if (cA.length >= 2 && cB.length >= 2){
+      const pA = Math.round(avg(cA, e => e.f.late ? 1 : 0)*100), pB = Math.round(avg(cB, e => e.f.late ? 1 : 0)*100);
+      if (Math.abs(pA - pB) >= 20) html += `<div class="ins"><span class="tag dark">Экран перед сном</span><br>Был накануне в <b>${pA}%</b> ночей с эпизодами и в <b>${pB}%</b> спокойных.</div>`;
+    }
+  }
+  return html;
+}
+function renderStats(){
+  const t = today();
+  const ks = Object.keys(entries).filter(k => filled(entries[k])).sort(), am = ks.filter(k => entries[k].am);
+  let streak = 0, d = filled(entries[t]) ? t : addDays(t, -1);
+  while (filled(entries[d])){ streak++; d = addDays(d, -1); }
+  const total = ks.reduce((s, k) => s + (entries[k].min || 0), 0);
+  const done = ALL.filter(x => st(x.id) === 2).length, prog = ALL.filter(x => st(x.id) === 1).length;
+  let pTot = 0, pDone = 0; plan.forEach(p => { if (p.d > t) return; p.t.forEach(id => { pTot++; if (doneOn(p.d, id)) pDone++; }); });
+  const tested = Object.keys(results).filter(id => byId[id] && results[id].length);
+  const weak = tested.map(id => [id, lastScore(id)]).sort((a, b) => a[1] - b[1]).slice(0, 3);
+
+  let html = `<div class="kpis">
+    <div class="kpi"><b>${Math.round(done/ALL.length*100)}%</b><span>подтем освоено</span></div>
+    <div class="kpi"><b>${fmtH(total/60)}</b><span>часов занятий</span></div>
+    <div class="kpi"><b>${streak}</b><span>${plural(streak,'день','дня','дней')} подряд</span></div></div>
+  <section class="card"><div class="ch"><h2>Курс</h2><small>${done} уверен, ${prog} в процессе</small></div>${barHtml(ALL.map(x => x.id))}
+    ${pTot ? `<div class="lbl"><span>План до сегодня</span><small>${pDone} из ${pTot}</small></div><div class="pbar"><div style="width:${Math.round(pDone/pTot*100)}%"></div></div>` : ''}</section>`;
+  if (tested.length) html += `<section class="card"><div class="ch"><h2>Тесты</h2><small>в среднем ${Math.round(avg(tested, lastScore))}%</small></div>
+    <p class="muted" style="margin-bottom:4px">Слабее всего</p>${weak.map(([id, s]) => `<button class="trow" data-act="quiz" data-v="${id}"><span class="code">${id}</span><span class="tx"><b>${byId[id].name}</b><small>последний результат ${s}%</small></span><span class="sc2">Ещё раз ›</span></button>`).join('')}</section>`;
+
+  const days14 = Array.from({length:14}, (_, i) => addDays(t, i-13));
+  const mins = days14.map(k => entries[k] ? entries[k].min || 0 : 0);
+  if (mins.some(Boolean)) html += `<section class="card"><div class="ch"><h2>Минуты занятий</h2><small>14 дней</small></div>
+    ${barChart(days14, mins, Math.max(cfg.goal, ...mins)*1.1, cfg.goal)}<div class="lg"><span><i class="b"></i>Минуты</span><span><i class="d"></i>Цель ${cfg.goal} мин</span></div></section>`;
+
+  if (!am.length) return html + `<section class="card"><div class="ch"><h2>Дневник</h2></div>
+    <p class="muted">Отмечай «Как ты сегодня?» на главном экране. После нескольких дней здесь появятся готовность по неделям, разбор сна и ночных эпизодов и то, что помогает тебе заниматься.</p></section>`;
+
+  const ws = weekStart(t), lws = addDays(ws, -7);
+  const thisW = Array.from({length:7}, (_, i) => addDays(ws, i)), lastW = Array.from({length:7}, (_, i) => addDays(lws, i));
+  const rA = thisW.map(k => readiness(entries[k])), rB = lastW.map(k => readiness(entries[k]));
+  const aA = rA.filter(v => v != null), aB = rB.filter(v => v != null);
+  const wk = thisW.map(k => entries[k]).filter(e => e && e.am), cnt = f => wk.filter(f).length;
+  const circles = [
+    ['Сон 7+ часов', cnt(e => e.sleep >= 7)], ['Цель по времени', thisW.filter(k => entries[k] && entries[k].min >= cfg.goal).length],
+    ['Спокойные ночи', cnt(e => (e.para || []).includes('calm'))], ['Настроение 7+', cnt(e => e.mood >= 7)],
+    ['Тревога до 4', cnt(e => e.st <= 4)], ['Спорт или прогулка', cnt(e => e.f && e.f.sport)]
+  ];
+  const ins = insights(am);
+  return html + `
+  <section class="card"><div class="ch"><h2>Готовность</h2><small>${aA.length ? 'эта неделя '+Math.round(avg(aA, v => v)) : ''}${aB.length ? ', прошлая '+Math.round(avg(aB, v => v)) : ''}</small></div>
+    ${lineChart(rA, rB)}<div class="lg"><span><i></i>Эта неделя</span><span><i class="d"></i>Прошлая неделя</span></div></section>
+  <section class="card"><div class="ch"><h2>Эта неделя</h2><small>дней из 7</small></div>
+    <div class="circles">${circles.map(([l, v]) => `<div class="circ"><div class="rg">${ringSvg(v/7, 31, 6)}<b>${v}/7</b></div>${l}</div>`).join('')}</div></section>
+  <section class="card"><div class="ch"><h2>Сон и эпизоды</h2></div>${nightInsight(am)}</section>
+  <section class="card"><div class="ch"><h2>Что на тебя влияет</h2></div>
+    ${ins === null ? `<p class="muted">Нужно хотя бы 4 отмеченных дня, сейчас ${am.length}. Выводы появятся сами.</p>` : ins || `<p class="muted">Явных закономерностей пока нет. Продолжай отмечать, и они проявятся.</p>`}</section>`;
+}
+
+/* ================= настройки ================= */
+function renderSettings(){
+  const nq = Object.values(qidx).reduce((s, n) => s + n, 0), nt = Object.keys(qidx).length;
+  return `
+  <section class="card"><div class="ch"><h2>Пересдача</h2></div>
+    <div class="sch"><span>Дата пересдачи</span></div><input class="field" id="s-exam" type="date" value="${esc(cfg.exam)}">
+    <div class="sch" style="margin-top:14px"><span>Цель на день</span><small>минут занятий</small></div>
+    <input class="field" id="s-goal" type="number" inputmode="numeric" min="10" max="600" value="${cfg.goal}">
+    <button class="primary" style="margin-top:14px" data-act="saveset">Сохранить</button></section>
+  <section class="card"><div class="ch"><h2>Импорт из NotebookLM</h2></div>
+    <p class="muted" style="margin-bottom:12px">План: ${plan.length ? plan.length+' '+plural(plan.length,'день','дня','дней')+', '+fmtDay(plan[0].d)+' – '+fmtDay(plan[plan.length-1].d) : 'не загружен'}.<br>Тесты: ${nt ? nq+' '+plural(nq,'вопрос','вопроса','вопросов')+' по '+nt+' '+plural(nt,'подтеме','подтемам','подтемам') : 'не загружены'}.</p>
+    <textarea class="field" id="imp" rows="6" placeholder="Вставь сюда ответ NotebookLM целиком: план или тесты"></textarea>
+    <button class="primary" style="margin-top:12px" data-act="import">Импортировать</button>
+    ${plan.length ? '<button class="secondary" data-act="clearplan">Удалить план</button>' : ''}
+    ${nt ? '<button class="secondary" data-act="cleartests">Удалить все тесты</button>' : ''}</section>
+  <section class="card"><div class="ch"><h2>Данные</h2></div>
+    <p class="muted">${useCloud ? 'Всё хранится в облаке Telegram и доступно на всех твоих устройствах.' : 'Приложение открыто не через Telegram, поэтому данные хранятся только в этом браузере.'}</p>
+    <button class="secondary" style="margin-top:12px" data-act="export">${showExport ? 'Скрыть копию данных' : 'Показать копию данных'}</button>
+    ${showExport ? `<textarea class="field" id="exp" rows="6" readonly style="margin-top:8px;font-size:12px">${esc(JSON.stringify({ cfg, status, entries, results }))}</textarea><button class="secondary" data-act="copy">Скопировать</button>` : ''}
+    <button class="secondary" data-act="resetTopics">Сбросить статусы тем</button>
+    <button class="secondary danger" data-act="reset">Удалить все дневные записи</button></section>`;
+}
+
+/* ================= импорт ================= */
+function parseLoose(txt){
+  txt = txt.replace(/```(json)?/gi, '').trim();
+  const i = Math.min(...['{','['].map(c => { const p = txt.indexOf(c); return p < 0 ? Infinity : p; }));
+  const j = Math.max(txt.lastIndexOf('}'), txt.lastIndexOf(']'));
+  if (!isFinite(i) || j < i) throw new Error('нет JSON');
+  return JSON.parse(txt.slice(i, j+1));
+}
+async function importText(txt){
+  let data; try { data = parseLoose(txt); } catch(e){ return 'Не получилось прочитать ответ. Скопируй его целиком, вместе с фигурными скобками.'; }
+  let planArr = Array.isArray(data.plan) ? data.plan : null, testArr = Array.isArray(data.tests) ? data.tests : null;
+  if (Array.isArray(data) && data.length){ if (data[0].date || data[0].d) planArr = data; else if (data[0].q || data[0].question) testArr = data; }
+  const msgs = [];
+  if (planArr){
+    const p = planArr.map(x => ({ d:String(x.date || x.d || ''), t:[...new Set((x.topics || x.t || []).map(String).filter(id => byId[id]))], f:String(x.focus || x.type || x.f || '').slice(0, 40) }))
+      .filter(x => /^\d{4}-\d{2}-\d{2}$/.test(x.d) && x.t.length).sort((a, b) => a.d < b.d ? -1 : 1);
+    if (!p.length) return 'План пустой или даты не в формате ГГГГ-ММ-ДД.';
+    const s = JSON.stringify(p), parts = s.match(/[\s\S]{1,3500}/g);
+    for (let i = 0; i < parts.length; i++) await store.set('plan_'+i, parts[i]);
+    await store.set('plan_n', String(parts.length));
+    plan = p; msgs.push('план на '+p.length+' '+plural(p.length,'день','дня','дней'));
+  }
+  if (testArr){
+    const groups = {};
+    testArr.forEach(x => {
+      const id = String(x.id || x.topic || ''), o = x.o || x.options;
+      let a = x.a != null ? x.a : x.answer;
+      if (typeof a === 'string'){ const L = a.trim().toUpperCase(); a = /^\d+$/.test(L) ? +L : 'ABCDEF'.indexOf(L) >= 0 ? 'ABCDEF'.indexOf(L) : 'АБВГДЕ'.indexOf(L); }
+      if (!byId[id] || !Array.isArray(o) || o.length < 2 || !(a >= 0 && a < o.length)) return;
+      (groups[id] = groups[id] || []).push({ q:String(x.q || x.question).slice(0, 600), o:o.map(v => String(v).slice(0, 200)), a:+a, e:String(x.e || x.explanation || '').slice(0, 400) });
+    });
+    const ids = Object.keys(groups);
+    if (!ids.length && !planArr) return 'Не нашёл вопросов. Проверь, что у каждого есть id подтемы, варианты и номер ответа.';
+    let n = 0;
+    for (const id of ids){
+      let arr = groups[id]; while (arr.length > 1 && JSON.stringify(arr).length > 4000) arr = arr.slice(0, -1);
+      if (JSON.stringify(arr).length > 4000) continue;
+      if (await store.set(qKey(id), JSON.stringify(arr))){ qidx[id] = arr.length; n += arr.length; }
+    }
+    await store.set('qidx', JSON.stringify(qidx));
+    if (ids.length) msgs.push(n+' '+plural(n,'вопрос','вопроса','вопросов'));
+  }
+  return msgs.length ? 'Загружено: '+msgs.join(' и ') : 'Не нашёл в тексте ни плана, ни тестов.';
+}
+
+/* ================= таймер ================= */
+const elapsed = () => timer ? timer.acc + (timer.paused ? 0 : Date.now() - timer.start) : 0;
+const saveTimer = () => store.set('timer', timer ? JSON.stringify(timer) : '');
+setInterval(() => {
+  if (!timer) return;
+  const el = elapsed();
+  const c = $('#tclock'); if (c) c.textContent = clock(el);
+  const cb = $('#tbclock'); if (cb) cb.textContent = clock(el);
+  const r = $('#tring'); if (r){ const svg = r.querySelector('svg'); if (svg) svg.outerHTML = ringSvg(Math.min(1, el/1500000), 74, 9); }
+  if (!timer.paused && el >= 1500000 && !timer.pomo){ timer.pomo = true; saveTimer(); haptic('success'); toast('25 минут! Сделай перерыв на 5 минут'); }
+}, 1000);
+function addSession(d, s){
+  const e = entryFor(d); e.sess.push(s); touch(d);
+  if (s.t){ fb = { d, i:e.sess.length - 1 }; if (st(s.t) === 0){ status[s.t] = 1; saveStatus(); } }
+}
+
+/* ================= рендер и события ================= */
+function syncBack(){
+  if (!ver('6.1')) return;
+  try { (sheet || tab === 'set' || tab === 'quiz') ? tg.BackButton.show() : tg.BackButton.hide(); } catch(e){}
+}
+function goBack(){
+  if (sheet){ sheet = null; }
+  else if (tab === 'set' || tab === 'quiz'){ tab = backTab; quiz = null; }
+  render();
+}
+try { if (ver('6.1')) tg.BackButton.onClick(goBack); } catch(e){}
+function render(){
+  renderTop();
+  $('#main').innerHTML = tab === 'today' ? renderToday() : tab === 'study' ? renderStudy() : tab === 'stats' ? renderStats() : tab === 'quiz' ? renderQuiz() : renderSettings();
+  renderBar(); renderSheet(); syncBack();
+}
+const confirmBox = msg => new Promise(r => { if (ver('6.2')) tg.showConfirm(msg, r); else r(window.confirm(msg)); });
+async function startQuiz(id){
+  const r = await store.get([qKey(id)]); let qs = [];
+  try { qs = JSON.parse(r[qKey(id)] || '[]'); } catch(err){}
+  if (!qs.length){ toast('Для этой темы тестов пока нет'); return false; }
+  qs = shuffle(qs).map(q => { const idx = shuffle(q.o.map((_, i) => i)); return { q:q.q, o:idx.map(i => q.o[i]), a:idx.indexOf(q.a), e:q.e }; });
+  if (tab !== 'quiz' && tab !== 'set') backTab = tab;
+  quiz = { id, qs, i:0, pick:null, right:0, done:false }; tab = 'quiz'; sheet = null;
+  return true;
+}
+
+document.addEventListener('input', e => {
+  if (e.target.id === 'note' && draft){ draft.note = e.target.value; touch(); }
+});
+
+document.addEventListener('click', async e => {
+  const b = e.target.closest('[data-act]'); if (!b || b.disabled) return;
+  const act = b.dataset.act, v = b.dataset.v, y = window.scrollY;
+  let toTop = false;
+  switch (act){
+    case 'tab': tab = v; backTab = v; quiz = null; sheet = null; if (v === 'today') openDay(cur); toTop = true; break;
+    case 'gear': if (tab !== 'set' && tab !== 'quiz') backTab = tab; tab = 'set'; sheet = null; toTop = true; break;
+    case 'back': goBack(); window.scrollTo(0, 0); return;
+    case 'close': sheet = null; break;
+    case 'sheet':
+      sheet = { k:v }; if (v === 'pick' || v === 'log') openMod = null; if (v === 'log') logPick = null;
+      if (v === 'checkin') sleepEdit = false; break;
+    case 'day': openDay(v); fb = null; sheet = null; tab = 'today'; backTab = 'today'; toTop = true; break;
+    case 'topic': sheet = { k:'topic', id:v }; break;
+
+    case 'sleepedit': sleepEdit = true; break;
+    case 'sleepok': draft.sc = true; sleepEdit = false; touch(); tick(); break;
+    case 'bed': draft.bed = tStr(tMin(draft.bed) + +v); tick(); touch(); break;
+    case 'wake': draft.wake = tStr(tMin(draft.wake) + +v); tick(); touch(); break;
+    case 'sq': draft.sq = +v; draft.sc = true; tick(); touch(); break;
+    case 'para': {
+      let p = draft.para;
+      if (v === 'calm' || v === 'unk') p = p.includes(v) ? [] : [v];
+      else { p = p.filter(x => x !== 'calm' && x !== 'unk'); p = p.includes(v) ? p.filter(x => x !== v) : p.concat(v); }
+      draft.para = p; tick(); touch(); break;
+    }
+    case 'state': {
+      const pr = PRESETS.find(x => x.k === v);
+      draft.state = v; [draft.mood, draft.en, draft.foc, draft.st] = pr.v; draft.am = true; draft.sc = true; tick(); touch(); break;
+    }
+    case 'seg': draft[b.dataset.k] = +v; tick(); touch(); break;
+    case 'food': draft.food = draft.food === +v ? 0 : +v; tick(); touch(); break;
+    case 'f': draft.f[v] = !draft.f[v]; draft.fCopied = false; tick(); touch(); break;
+
+    case 'mod': openMod = openMod === +v ? null : +v; break;
+    case 'pickset': pick = v; sheet = null; tick(); break;
+    case 'logset': logPick = logPick === v ? null : v; tick(); break;
+    case 'logtopic': logPick = v; sheet = { k:'log' }; openMod = null; break;
+    case 'addmin': addSession(cur, { t:logPick, m:+v, q:null }); logPick = null; sheet = null; tick(); toast('Записал '+v+' мин'); break;
+
+    case 'tstart': {
+      if (timer) break;
+      const id = v || null;
+      if (cur !== today()) openDay(today());
+      timer = { t:id, start:Date.now(), acc:0, paused:false, s:nowHM() };
+      if (id && st(id) === 0){ status[id] = 1; saveStatus(); }
+      pick = null; fb = null; sugg = null; sheet = null; tab = 'today'; backTab = 'today'; toTop = true;
+      await saveTimer(); haptic('success'); break;
+    }
+    case 'tpause':
+      if (!timer) break;
+      if (timer.paused){ timer.start = Date.now(); timer.paused = false; } else { timer.acc += Date.now() - timer.start; timer.paused = true; }
+      await saveTimer(); tick(); break;
+    case 'tstop': {
+      if (!timer) break;
+      const m = Math.round(elapsed()/60000), t0 = timer;
+      timer = null; await saveTimer();
+      if (m < 1){ toast('Меньше минуты, не записал'); break; }
+      openDay(today()); tab = 'today'; backTab = 'today'; toTop = true;
+      addSession(today(), { t:t0.t, m, q:null, s:t0.s }); haptic('success'); toast('Записал '+m+' мин'); break;
+    }
+    case 'delsess': draft.sess.splice(+v, 1); fb = null; touch(); break;
+    case 'fb': {
+      if (!fb) break;
+      const s = entryFor(fb.d).sess[fb.i]; if (!s){ fb = null; break; }
+      s.q = +v; touch(fb.d); fb = null; tick();
+      if (+v === 3 && s.t && st(s.t) < 2 && goodSessions(s.t) >= 2) sugg = s.t;
+      break;
+    }
+    case 'setst': status[v] = +b.dataset.s; await saveStatus(); if (sugg === v) sugg = null; tick();
+      if (+b.dataset.s === 2) toast('Тема '+v+' отмечена как «уверен»'); break;
+    case 'nosugg': sugg = null; break;
+
+    case 'sview': studyView = v; break;
+    case 'mtop': openTop[v] = !openTop[v]; break;
+
+    case 'quiz': if (await startQuiz(v)) toTop = true; else return; break;
+    case 'ans': if (quiz.pick != null) return; quiz.pick = +v; if (+v === quiz.qs[quiz.i].a){ quiz.right++; haptic('success'); } else haptic('error'); break;
+    case 'qnext':
+      quiz.i++; quiz.pick = null;
+      if (quiz.i >= quiz.qs.length){
+        quiz.done = true; const pct = Math.round(quiz.right / quiz.qs.length * 100), id = quiz.id;
+        results[id] = (results[id] || []).concat([[today(), pct]]).slice(-5);
+        const m = modOf(id), part = {}; Object.keys(results).filter(k => modOf(k) === m).forEach(k => part[k] = results[k]);
+        await store.set('r_'+m, JSON.stringify(part));
+      }
+      toTop = true; break;
+
+    case 'saveset': {
+      cfg = { exam:$('#s-exam').value, goal:Math.max(10, Math.min(600, +$('#s-goal').value || 90)) };
+      const ok = await store.set('cfg', JSON.stringify(cfg));
+      haptic(ok ? 'success' : 'error'); toast(ok ? 'Сохранено' : 'Не сохранилось, попробуй ещё раз'); break;
+    }
+    case 'import': { const msg = await importText($('#imp').value); toast(msg); haptic(msg.startsWith('Загружено') ? 'success' : 'error'); break; }
+    case 'clearplan': {
+      if (!(await confirmBox('Удалить план?'))) return;
+      const n = Math.ceil(JSON.stringify(plan).length / 3500) + 1;
+      await delMany(Array.from({length:n}, (_, i) => 'plan_'+i).concat('plan_n')); plan = []; toast('План удалён'); break;
+    }
+    case 'cleartests': {
+      if (!(await confirmBox('Удалить все тесты? Результаты прохождения останутся.'))) return;
+      await delMany(Object.keys(qidx).map(qKey).concat('qidx')); qidx = {}; toast('Тесты удалены'); break;
+    }
+    case 'export': showExport = !showExport; break;
+    case 'copy': {
+      const ta = $('#exp'); ta.select();
+      try { await navigator.clipboard.writeText(ta.value); toast('Скопировано'); }
+      catch(err){ try { document.execCommand('copy'); toast('Скопировано'); } catch(e2){ toast('Выдели текст и скопируй вручную'); } }
+      return;
+    }
+    case 'resetTopics':
+      if (!(await confirmBox('Сбросить статусы всех подтем?'))) return;
+      status = {}; await saveStatus(); toast('Статусы сброшены'); break;
+    case 'reset': {
+      if (!(await confirmBox('Удалить все дневные записи? Темы, план и тесты останутся.'))) return;
+      await delMany(Object.keys(entries).map(k => 'd_'+k)); entries = {}; openDay(today()); toast('Записи удалены'); break;
+    }
+  }
+  render();
+  window.scrollTo(0, toTop ? 0 : y);
+});
+
+load().then(() => { openDay(today()); render(); });
+</script>
+</body>
+</html>
