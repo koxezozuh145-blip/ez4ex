@@ -202,6 +202,22 @@ textarea.field{resize:vertical;min-height:84px}
 .qo.right{background:var(--ink);color:var(--on)}
 .qo.right .mk{background:var(--on);color:var(--ink)}
 .qo.wrong{background:var(--soft2);text-decoration:line-through;text-decoration-color:var(--ink3)}
+.lead{font-size:16px;line-height:1.55;margin:0}
+.term{padding:12px 0;border-top:1px solid var(--line)}
+.term:first-child{border-top:0;padding-top:0}
+.term b{display:block;font-size:15.5px;margin-bottom:2px}
+.term span{color:var(--ink2);font-size:15px;line-height:1.5}
+.formula{background:var(--soft);border-radius:var(--r3);padding:12px 14px;margin-bottom:8px}
+.formula:last-child{margin-bottom:0}
+.formula code{display:block;font-family:"SF Mono",ui-monospace,Menlo,Consolas,monospace;font-size:15.5px;font-weight:600;overflow-x:auto;white-space:pre-wrap}
+.formula span{display:block;color:var(--ink2);font-size:14px;margin-top:4px}
+.pts{margin:0;padding:0;list-style:none}
+.pts li{position:relative;padding:0 0 10px 18px;font-size:15.5px;line-height:1.5}
+.pts li:last-child{padding-bottom:0}
+.pts li::before{content:"";position:absolute;left:2px;top:.62em;width:6px;height:6px;border-radius:50%;background:var(--ink3)}
+.badges{display:flex;gap:6px;flex-wrap:wrap;margin-top:5px}
+.badge{font-size:12.5px;font-weight:600;padding:3px 9px;border-radius:999px;background:var(--soft);color:var(--ink2)}
+.badge.on{background:var(--ink);color:var(--on)}
 .expl{padding:14px;border-radius:var(--r3);box-shadow:inset 0 0 0 1px var(--soft2);font-size:15px;margin:6px 0 14px}
 
 /* calendar */
@@ -375,6 +391,7 @@ const ALL = MODULES.flatMap(m => m.items.map(it => ({ id: it[0], name: it[1], de
 const byId = Object.fromEntries(ALL.map(x => [x.id, x]));
 const modOf = id => +id.split('.')[0];
 const qKey = id => 'q_'+id.replace('.', '_');
+const thKey = (id, i) => 'th_'+id.replace('.', '_')+'_'+i;
 
 /* ================= справочники ================= */
 const PRESETS = [
@@ -408,11 +425,11 @@ const Q_LABEL = { 1:'не понял', 2:'частично', 3:'понял' };
 
 /* ================= состояние ================= */
 let cfg = { exam:'', goal:90 };
-let status = {}, entries = {}, results = {}, plan = [], qidx = {};
+let status = {}, entries = {}, results = {}, plan = [], qidx = {}, thidx = {};
 let timer = null;
 let tab = 'today', backTab = 'today', studyView = 'topics', cur = today(), draft = null;
 let pick = null, sheet = null, openMod = null, openTop = {}, sleepEdit = false, showExport = false;
-let fb = null, sugg = null, quiz = null, logPick = null;
+let fb = null, sugg = null, quiz = null, logPick = null, theory = null, showSol = false, quizBack = null;
 
 /* ================= записи дней ================= */
 function lastEntry(before){ const ks = Object.keys(entries).filter(k => k < before).sort(); return ks.length ? entries[ks[ks.length-1]] : null; }
@@ -448,12 +465,13 @@ function touch(d){
 
 /* ================= загрузка ================= */
 async function load(){
-  const base = await store.get(['cfg','ts','timer','qidx','plan_n','r_1','r_2','r_3','r_4','r_5','r_6','r_7']);
+  const base = await store.get(['cfg','ts','timer','qidx','thidx','plan_n','r_1','r_2','r_3','r_4','r_5','r_6','r_7']);
   const J = (s, def) => { try { return s ? JSON.parse(s) : def; } catch(e){ return def; } };
   cfg = Object.assign(cfg, J(base.cfg, {}));
   status = J(base.ts, {}) || {};
   timer = J(base.timer, null);
   qidx = J(base.qidx, {}) || {};
+  thidx = J(base.thidx, {}) || {};
   for (let m = 1; m <= 7; m++) Object.assign(results, J(base['r_'+m], {}));
   const pn = +base.plan_n || 0;
   if (pn){ const parts = await getMany(Array.from({length:pn}, (_, i) => 'plan_'+i)); plan = J(Array.from({length:pn}, (_, i) => parts['plan_'+i] || '').join(''), []); }
@@ -531,11 +549,12 @@ const ICON = {
   list:  SVG('<path d="M9 6h11M9 12h11M9 18h11"/><path d="M4.5 6l.5.5 1-1.5M4.5 12l.5.5 1-1.5M4.5 18l.5.5 1-1.5"/>')
 };
 const TABS = [['today','Сегодня'],['study','Учёба'],['stats','Прогресс']];
-const TITLES = { today:'Сегодня', study:'Учёба', stats:'Прогресс', set:'Настройки', quiz:'Тест' };
+const TITLES = { today:'Сегодня', study:'Учёба', stats:'Прогресс', set:'Настройки', quiz:'Тест', theory:'Теория' };
+const SUB = t => t === 'set' || t === 'quiz' || t === 'theory';
 
 /* ================= шапка, меню, плашка таймера ================= */
 function renderTop(){
-  const sub = tab === 'set' || tab === 'quiz';
+  const sub = SUB(tab);
   const left = sub ? `<div class="tl"><button class="iconbtn" data-act="back" aria-label="Назад">${ICON.back}</button><div class="ptitle">${TITLES[tab]}</div></div>`
                    : `<div class="ptitle">${TITLES[tab]}</div>`;
   const right = sub ? '' : `<button class="iconbtn" data-act="gear" aria-label="Настройки">${ICON.gear}</button>`;
@@ -699,6 +718,7 @@ function sheetTopic(id){
     <div class="opts o3">${[[0,'Не начато'],[1,'В процессе'],[2,'Уверен']].map(([v, l]) => `<button class="opt ${s === v ? 'on' : ''}" data-act="setst" data-v="${id}" data-s="${v}">${l}</button>`).join('')}</div>
     <div style="height:18px"></div>
     ${!timer ? `<button class="primary" data-act="tstart" data-v="${id}">Начать 25 минут</button>` : ''}
+    ${thidx[id] ? `<button class="secondary" data-act="theory" data-v="${id}">Читать теорию</button>` : ''}
     ${qidx[id] ? `<button class="secondary" data-act="quiz" data-v="${id}">Пройти тест · ${qidx[id]} ${plural(qidx[id],'вопрос','вопроса','вопросов')}</button>` : ''}
     <button class="secondary" data-act="logtopic" data-v="${id}">Записать занятие вручную</button>`;
 }
@@ -758,19 +778,69 @@ function studyPlan(){
   }).join('')}</section>`;
 }
 function studyTests(){
-  const ids = ALL.map(x => x.id).filter(id => qidx[id]);
-  if (!ids.length) return `<section class="card"><div class="ch"><h2>Тестов пока нет</h2></div>
-    <p class="muted">Сгенерируй тесты в NotebookLM по модулям и вставь ответ в настройки. Каждый модуль загружается отдельно.</p>
+  const has = id => thidx[id] || qidx[id];
+  const ids = ALL.map(x => x.id).filter(has);
+  if (!ids.length) return `<section class="card"><div class="ch"><h2>Материалов пока нет</h2></div>
+    <p class="muted">Сгенерируй в NotebookLM теорию и тесты по модулям и вставь ответы в настройки. Каждый модуль загружается отдельно.</p>
     <button class="secondary" style="margin-top:14px" data-act="gear">Открыть импорт</button></section>`;
-  const tested = ids.filter(id => lastScore(id) != null);
-  return `<section class="card"><div class="big"><b>${tested.length ? Math.round(avg(tested, lastScore))+'%' : '–'}</b><span class="muted">средний результат, пройдено ${tested.length} из ${ids.length}</span></div></section>
-    ${MODULES.filter(m => m.items.some(it => qidx[it[0]])).map(m => `<section class="card"><div class="ch"><h2>${m.n}. ${m.short}</h2></div>
-      ${m.items.filter(it => qidx[it[0]]).map(it => { const id = it[0], sc = lastScore(id);
-        return `<button class="trow" data-act="quiz" data-v="${id}"><span class="code">${id}</span><span class="tx"><b>${it[1]}</b><small>${qidx[id]} ${plural(qidx[id],'вопрос','вопроса','вопросов')}${sc != null ? ', последний результат '+sc+'%' : ''}</small></span><span class="sc2">${sc == null ? 'Начать' : 'Ещё раз'} ›</span></button>`; }).join('')}</section>`).join('')}`;
+  const tested = ids.filter(id => qidx[id] && lastScore(id) != null);
+  const nTh = Object.keys(thidx).length, nQ = Object.keys(qidx).length;
+  return `<section class="card"><div class="big"><b>${tested.length ? Math.round(avg(tested, lastScore))+'%' : '–'}</b><span class="muted">средний результат тестов</span></div>
+      <p class="muted">Теория по ${nTh} из ${ALL.length} подтем, тесты по ${nQ}. Нажми на подтему, чтобы читать теорию${nQ ? ' или пройти тест' : ''}.</p></section>
+    ${MODULES.filter(m => m.items.some(it => has(it[0]))).map(m => `<section class="card"><div class="ch"><h2>${m.n}. ${m.short}</h2></div>
+      ${m.items.filter(it => has(it[0])).map(it => { const id = it[0], sc = lastScore(id);
+        return `<button class="trow" data-act="${thidx[id] ? 'theory' : 'quiz'}" data-v="${id}"><span class="code">${id}</span><span class="tx"><b>${it[1]}</b>
+          <span class="badges">${thidx[id] ? '<span class="badge">теория</span>' : ''}${qidx[id] ? `<span class="badge ${sc != null && sc >= 80 ? 'on' : ''}">тест${sc != null ? ' '+sc+'%' : ', '+qidx[id]+' вопр.'}</span>` : ''}</span></span>
+          <span class="dot s${st(id)}">${st(id) === 2 ? '✓' : ''}</span></button>`; }).join('')}</section>`).join('')}`;
 }
 function renderStudy(){
-  return `<div class="switch">${[['topics','Темы'],['plan','План'],['tests','Тесты']].map(([k, l]) => `<button class="${studyView === k ? 'on' : ''}" data-act="sview" data-v="${k}">${l}</button>`).join('')}</div>
+  return `<div class="switch">${[['topics','Темы'],['plan','План'],['tests','Материалы']].map(([k, l]) => `<button class="${studyView === k ? 'on' : ''}" data-act="sview" data-v="${k}">${l}</button>`).join('')}</div>
     ${studyView === 'topics' ? studyTopics() : studyView === 'plan' ? studyPlan() : studyTests()}`;
+}
+
+/* ================= теория ================= */
+function renderTheory(){
+  const id = theory.id, x = byId[id], d = theory.data;
+  const sec = (t, body) => body ? `<section class="card"><div class="ch"><h2>${t}</h2></div>${body}</section>` : '';
+  const list = a => a && a.length ? `<ul class="pts">${a.map(v => `<li>${esc(v)}</li>`).join('')}</ul>` : '';
+  const withTh = ALL.map(y => y.id).filter(i => thidx[i]), pos = withTh.indexOf(id);
+  const prev = withTh[pos-1], next = withTh[pos+1];
+  return `<section class="card"><p class="muted">${id} · ${MODULES[x.mod-1].short}</p><h2 style="font-size:22px;margin:4px 0 10px;line-height:1.25">${x.name}</h2>
+      ${d.s ? `<p class="lead">${esc(d.s)}</p>` : ''}
+      ${!timer ? `<button class="primary" style="margin-top:16px" data-act="tstart" data-v="${id}" data-stay="1">Начать 25 минут с этой темой</button>` : ''}</section>
+    ${sec('Термины', d.d.length ? d.d.map(([a, b]) => `<div class="term"><b>${esc(a)}</b><span>${esc(b)}</span></div>`).join('') : '')}
+    ${sec('Формулы', d.f.length ? d.f.map(([a, b]) => `<div class="formula"><code>${esc(a)}</code>${b ? `<span>${esc(b)}</span>` : ''}</div>`).join('') : '')}
+    ${sec('Главное', list(d.k))}
+    ${sec('Типичные ошибки', list(d.m))}
+    ${d.x && d.x.q ? sec('Пример', `<p style="margin:0 0 12px;line-height:1.5">${esc(d.x.q)}</p>${showSol ? `<div class="expl" style="white-space:pre-line;margin-bottom:0">${esc(d.x.a)}</div>` : `<button class="secondary" style="margin:0" data-act="sol">Показать решение</button>`}`) : ''}
+    <section class="card"><div class="ch"><h2>Как ты знаешь тему?</h2></div>
+      <div class="opts o3">${[[0,'Не начато'],[1,'В процессе'],[2,'Уверен']].map(([v, l]) => `<button class="opt ${st(id) === v ? 'on' : ''}" data-act="setst" data-v="${id}" data-s="${v}">${l}</button>`).join('')}</div>
+      ${qidx[id] ? `<button class="primary" style="margin-top:14px" data-act="quiz" data-v="${id}">Проверить себя · ${qidx[id]} ${plural(qidx[id],'вопрос','вопроса','вопросов')}</button>` : '<p class="muted" style="margin-top:12px">Тестов по этой теме пока нет.</p>'}
+      ${prev || next ? `<div class="row2">${prev ? `<button data-act="theory" data-v="${prev}">‹ ${prev} ${byId[prev].name}</button>` : '<span></span>'}${next ? `<button data-act="theory" data-v="${next}">${next} ${byId[next].name} ›</button>` : ''}</div>` : ''}
+    </section>`;
+}
+function normTheory(x){
+  const arr = v => Array.isArray(v) ? v : v ? [v] : [];
+  const pair = (v, ka, kb) => Array.isArray(v) ? [String(v[0] || ''), String(v[1] || '')]
+    : typeof v === 'object' && v ? [String(v[ka[0]] || v[ka[1]] || v[ka[2]] || ''), String(v[kb[0]] || v[kb[1]] || v[kb[2]] || '')]
+    : (() => { const t = String(v), i = t.search(/\s[—–-]\s|:\s/); return i > 0 ? [t.slice(0, i).trim(), t.slice(i).replace(/^\s*[—–:-]\s*/, '')] : [t, '']; })();
+  const ex = x.x || x.example || null;
+  return {
+    s: String(x.s || x.summary || x.sum || ''),
+    d: arr(x.d || x.terms || x.def).map(v => pair(v, ['t','term','термин'], ['d','def','definition'])).filter(p => p[0]),
+    f: arr(x.f || x.formulas).map(v => pair(v, ['f','formula','формула'], ['m','meaning','desc'])).filter(p => p[0]),
+    k: arr(x.k || x.key || x.points).map(String),
+    m: arr(x.m || x.mistakes).map(String),
+    x: ex ? { q:String(ex.q || ex.task || ex.question || ''), a:String(ex.a || ex.solution || ex.answer || '') } : null
+  };
+}
+async function openTheory(id){
+  const n = thidx[id]; if (!n){ toast('Теории по этой теме пока нет'); return false; }
+  const keys = Array.from({length:n}, (_, i) => thKey(id, i)), parts = await store.get(keys);
+  let data; try { data = normTheory(JSON.parse(keys.map(k => parts[k] || '').join(''))); } catch(e){ toast('Не удалось открыть теорию, загрузи её заново'); return false; }
+  if (!SUB(tab)) backTab = tab;
+  theory = { id, data }; showSol = false; tab = 'theory'; sheet = null;
+  return true;
 }
 
 /* ================= тест ================= */
@@ -934,11 +1004,13 @@ function renderSettings(){
     <input class="field" id="s-goal" type="number" inputmode="numeric" min="10" max="600" value="${cfg.goal}">
     <button class="primary" style="margin-top:14px" data-act="saveset">Сохранить</button></section>
   <section class="card"><div class="ch"><h2>Импорт из NotebookLM</h2></div>
-    <p class="muted" style="margin-bottom:12px">План: ${plan.length ? plan.length+' '+plural(plan.length,'день','дня','дней')+', '+fmtDay(plan[0].d)+' – '+fmtDay(plan[plan.length-1].d) : 'не загружен'}.<br>Тесты: ${nt ? nq+' '+plural(nq,'вопрос','вопроса','вопросов')+' по '+nt+' '+plural(nt,'подтеме','подтемам','подтемам') : 'не загружены'}.</p>
-    <textarea class="field" id="imp" rows="6" placeholder="Вставь сюда ответ NotebookLM целиком: план или тесты"></textarea>
-    <button class="primary" style="margin-top:12px" data-act="import">Импортировать</button>
+    <p class="muted" style="margin-bottom:12px">Теория: ${Object.keys(thidx).length ? 'по '+Object.keys(thidx).length+' из '+ALL.length+' подтем' : 'не загружена'}.<br>План: ${plan.length ? plan.length+' '+plural(plan.length,'день','дня','дней')+', '+fmtDay(plan[0].d)+' – '+fmtDay(plan[plan.length-1].d) : 'не загружен'}.<br>Тесты: ${nt ? nq+' '+plural(nq,'вопрос','вопроса','вопросов')+' по '+nt+' '+plural(nt,'подтеме','подтемам','подтемам') : 'не загружены'}.</p>
+    ${[['plan','План'],['tests','Тесты'],['theory','Теория']].map(([k, l]) => `<div class="lbl"><span>${l}</span></div>
+    <textarea class="field" id="imp-${k}" rows="4" placeholder="Вставь JSON: ${l.toLowerCase()} из NotebookLM"></textarea>
+    <button class="secondary" data-act="import" data-v="${k}">Загрузить: ${l.toLowerCase()}</button>`).join('')}
     ${plan.length ? '<button class="secondary" data-act="clearplan">Удалить план</button>' : ''}
-    ${nt ? '<button class="secondary" data-act="cleartests">Удалить все тесты</button>' : ''}</section>
+    ${nt ? '<button class="secondary" data-act="cleartests">Удалить все тесты</button>' : ''}
+    ${Object.keys(thidx).length ? '<button class="secondary" data-act="cleartheory">Удалить всю теорию</button>' : ''}</section>
   <section class="card"><div class="ch"><h2>Данные</h2></div>
     <p class="muted">${useCloud ? 'Всё хранится в облаке Telegram и доступно на всех твоих устройствах.' : 'Приложение открыто не через Telegram, поэтому данные хранятся только в этом браузере.'}</p>
     <button class="secondary" style="margin-top:12px" data-act="export">${showExport ? 'Скрыть копию данных' : 'Показать копию данных'}</button>
@@ -955,10 +1027,11 @@ function parseLoose(txt){
   if (!isFinite(i) || j < i) throw new Error('нет JSON');
   return JSON.parse(txt.slice(i, j+1));
 }
-async function importText(txt){
+async function importText(txt, kind){
   let data; try { data = parseLoose(txt); } catch(e){ return 'Не получилось прочитать ответ. Скопируй его целиком, вместе с фигурными скобками.'; }
-  let planArr = Array.isArray(data.plan) ? data.plan : null, testArr = Array.isArray(data.tests) ? data.tests : null;
-  if (Array.isArray(data) && data.length){ if (data[0].date || data[0].d) planArr = data; else if (data[0].q || data[0].question) testArr = data; }
+  const arr = Array.isArray(data) ? data : data[kind];
+  if (!Array.isArray(arr) || !arr.length) return 'Не нашёл в тексте нужный раздел. Проверь, что вставил в правильное окошко.';
+  const planArr = kind === 'plan' ? arr : null, testArr = kind === 'tests' ? arr : null, thArr = kind === 'theory' ? arr : null;
   const msgs = [];
   if (planArr){
     const p = planArr.map(x => ({ d:String(x.date || x.d || ''), t:[...new Set((x.topics || x.t || []).map(String).filter(id => byId[id]))], f:String(x.focus || x.type || x.f || '').slice(0, 40) }))
@@ -989,6 +1062,20 @@ async function importText(txt){
     await store.set('qidx', JSON.stringify(qidx));
     if (ids.length) msgs.push(n+' '+plural(n,'вопрос','вопроса','вопросов'));
   }
+  if (thArr){
+    let n = 0;
+    for (const x of thArr){
+      const id = String(x.id || x.topic || ''); if (!byId[id]) continue;
+      const dt = normTheory(x); if (!dt.s && !dt.k.length && !dt.d.length) continue;
+      const parts = JSON.stringify(dt).match(/[\s\S]{1,3500}/g), old = thidx[id] || 0;
+      let ok = true; for (let i = 0; i < parts.length; i++) ok = (await store.set(thKey(id, i), parts[i])) && ok;
+      if (old > parts.length) await delMany(Array.from({length:old - parts.length}, (_, i) => thKey(id, parts.length + i)));
+      if (ok){ thidx[id] = parts.length; n++; }
+    }
+    await store.set('thidx', JSON.stringify(thidx));
+    if (n) msgs.push('теория по '+n+' '+plural(n,'подтеме','подтемам','подтемам'));
+    else if (!planArr && !testArr) return 'Не нашёл теорию. Проверь, что у каждой подтемы есть id и поле s.';
+  }
   return msgs.length ? 'Загружено: '+msgs.join(' и ') : 'Не нашёл в тексте ни плана, ни тестов.';
 }
 
@@ -1011,17 +1098,18 @@ function addSession(d, s){
 /* ================= рендер и события ================= */
 function syncBack(){
   if (!ver('6.1')) return;
-  try { (sheet || tab === 'set' || tab === 'quiz') ? tg.BackButton.show() : tg.BackButton.hide(); } catch(e){}
+  try { (sheet || SUB(tab)) ? tg.BackButton.show() : tg.BackButton.hide(); } catch(e){}
 }
 function goBack(){
   if (sheet){ sheet = null; }
-  else if (tab === 'set' || tab === 'quiz'){ tab = backTab; quiz = null; }
+  else if (tab === 'quiz' && quizBack === 'theory' && theory){ tab = 'theory'; quiz = null; quizBack = null; }
+  else if (SUB(tab)){ tab = backTab; quiz = null; theory = null; quizBack = null; }
   render();
 }
 try { if (ver('6.1')) tg.BackButton.onClick(goBack); } catch(e){}
 function render(){
   renderTop();
-  $('#main').innerHTML = tab === 'today' ? renderToday() : tab === 'study' ? renderStudy() : tab === 'stats' ? renderStats() : tab === 'quiz' ? renderQuiz() : renderSettings();
+  $('#main').innerHTML = tab === 'today' ? renderToday() : tab === 'study' ? renderStudy() : tab === 'stats' ? renderStats() : tab === 'quiz' ? renderQuiz() : tab === 'theory' ? renderTheory() : renderSettings();
   renderBar(); renderSheet(); syncBack();
 }
 const confirmBox = msg => new Promise(r => { if (ver('6.2')) tg.showConfirm(msg, r); else r(window.confirm(msg)); });
@@ -1030,7 +1118,8 @@ async function startQuiz(id){
   try { qs = JSON.parse(r[qKey(id)] || '[]'); } catch(err){}
   if (!qs.length){ toast('Для этой темы тестов пока нет'); return false; }
   qs = shuffle(qs).map(q => { const idx = shuffle(q.o.map((_, i) => i)); return { q:q.q, o:idx.map(i => q.o[i]), a:idx.indexOf(q.a), e:q.e }; });
-  if (tab !== 'quiz' && tab !== 'set') backTab = tab;
+  quizBack = tab === 'theory' ? 'theory' : (tab === 'quiz' ? quizBack : null);
+  if (!SUB(tab)) backTab = tab;
   quiz = { id, qs, i:0, pick:null, right:0, done:false }; tab = 'quiz'; sheet = null;
   return true;
 }
@@ -1038,14 +1127,20 @@ async function startQuiz(id){
 document.addEventListener('input', e => {
   if (e.target.id === 'note' && draft){ draft.note = e.target.value; touch(); }
 });
+function saveCfgFromInputs(){
+  const ex = $('#s-exam'), g = $('#s-goal'); if (!ex || !g) return;
+  cfg = { exam:ex.value, goal:Math.max(10, Math.min(600, +g.value || 90)) };
+  store.set('cfg', JSON.stringify(cfg)); renderTop();
+}
+['change','input'].forEach(t => document.addEventListener(t, e => { if (e.target.id === 's-exam' || e.target.id === 's-goal') saveCfgFromInputs(); }));
 
 document.addEventListener('click', async e => {
   const b = e.target.closest('[data-act]'); if (!b || b.disabled) return;
   const act = b.dataset.act, v = b.dataset.v, y = window.scrollY;
   let toTop = false;
   switch (act){
-    case 'tab': tab = v; backTab = v; quiz = null; sheet = null; if (v === 'today') openDay(cur); toTop = true; break;
-    case 'gear': if (tab !== 'set' && tab !== 'quiz') backTab = tab; tab = 'set'; sheet = null; toTop = true; break;
+    case 'tab': tab = v; backTab = v; quiz = null; theory = null; sheet = null; if (v === 'today') openDay(cur); toTop = true; break;
+    case 'gear': if (!SUB(tab)) backTab = tab; tab = 'set'; sheet = null; toTop = true; break;
     case 'back': goBack(); window.scrollTo(0, 0); return;
     case 'close': sheet = null; break;
     case 'sheet':
@@ -1082,10 +1177,11 @@ document.addEventListener('click', async e => {
     case 'tstart': {
       if (timer) break;
       const id = v || null;
+      const stay = !!b.dataset.stay;
       if (cur !== today()) openDay(today());
       timer = { t:id, start:Date.now(), acc:0, paused:false, s:nowHM() };
       if (id && st(id) === 0){ status[id] = 1; saveStatus(); }
-      pick = null; fb = null; sugg = null; sheet = null; tab = 'today'; backTab = 'today'; toTop = true;
+      pick = null; fb = null; sugg = null; sheet = null; if (!stay){ tab = 'today'; backTab = 'today'; toTop = true; }
       await saveTimer(); haptic('success'); break;
     }
     case 'tpause':
@@ -1116,6 +1212,8 @@ document.addEventListener('click', async e => {
     case 'mtop': openTop[v] = !openTop[v]; break;
 
     case 'quiz': if (await startQuiz(v)) toTop = true; else return; break;
+    case 'theory': if (await openTheory(v)) toTop = true; else return; break;
+    case 'sol': showSol = true; break;
     case 'ans': if (quiz.pick != null) return; quiz.pick = +v; if (+v === quiz.qs[quiz.i].a){ quiz.right++; haptic('success'); } else haptic('error'); break;
     case 'qnext':
       quiz.i++; quiz.pick = null;
@@ -1128,11 +1226,11 @@ document.addEventListener('click', async e => {
       toTop = true; break;
 
     case 'saveset': {
-      cfg = { exam:$('#s-exam').value, goal:Math.max(10, Math.min(600, +$('#s-goal').value || 90)) };
+      saveCfgFromInputs();
       const ok = await store.set('cfg', JSON.stringify(cfg));
       haptic(ok ? 'success' : 'error'); toast(ok ? 'Сохранено' : 'Не сохранилось, попробуй ещё раз'); break;
     }
-    case 'import': { const msg = await importText($('#imp').value); toast(msg); haptic(msg.startsWith('Загружено') ? 'success' : 'error'); break; }
+    case 'import': { const msg = await importText($('#imp-'+v).value, v); toast(msg); haptic(msg.startsWith('Загружено') ? 'success' : 'error'); break; }
     case 'clearplan': {
       if (!(await confirmBox('Удалить план?'))) return;
       const n = Math.ceil(JSON.stringify(plan).length / 3500) + 1;
@@ -1141,6 +1239,11 @@ document.addEventListener('click', async e => {
     case 'cleartests': {
       if (!(await confirmBox('Удалить все тесты? Результаты прохождения останутся.'))) return;
       await delMany(Object.keys(qidx).map(qKey).concat('qidx')); qidx = {}; toast('Тесты удалены'); break;
+    }
+    case 'cleartheory': {
+      if (!(await confirmBox('Удалить всю теорию?'))) return;
+      const ks = []; Object.keys(thidx).forEach(id => { for (let i = 0; i < thidx[id]; i++) ks.push(thKey(id, i)); });
+      await delMany(ks.concat('thidx')); thidx = {}; toast('Теория удалена'); break;
     }
     case 'export': showExport = !showExport; break;
     case 'copy': {
