@@ -11,7 +11,7 @@
 :root{
   --page:#ebebed; --card:#f7f7f8; --card2:#ffffff; --ink:#141416; --ink2:#5b5e66; --ink3:#9a9ca3;
   --line:rgba(0,0,0,.06); --soft:rgba(0,0,0,.045); --soft2:rgba(0,0,0,.09); --on:#ffffff; --mid:#b5b7bc;
-  --acc:#d4f25c; --acc-ink:#141416; --accl:#141416; --g1:#f6ffb0; --g2:#dcf55f; --g3:#a6dc4c; --g4:#6fb83c; --tile:rgba(38,48,10,.78); --tile-ink:#ecffa4; --glow:rgba(212,242,92,.55); --btn:#141416; --btn-ink:#ffffff;
+  --warn:#f2714f; --acc:#d4f25c; --acc-ink:#141416; --accl:#141416; --g1:#f6ffb0; --g2:#dcf55f; --g3:#a6dc4c; --g4:#6fb83c; --tile:rgba(38,48,10,.78); --tile-ink:#ecffa4; --glow:rgba(212,242,92,.55); --btn:#141416; --btn-ink:#ffffff;
   --glass:rgba(255,255,255,.78); --shadow:0 1px 1px rgba(0,0,0,.03),0 12px 32px rgba(0,0,0,.06);
   --edge:inset 0 1px 0 rgba(255,255,255,.9); --ease:cubic-bezier(.2,.8,.2,1);
 }
@@ -364,6 +364,13 @@ textarea.field{resize:vertical;min-height:84px}
 .night-card .muted{color:rgba(20,20,22,.65)}
 .night-card .tico{background:rgba(20,20,22,.1)}
 @keyframes pop{from{transform:scale(.97);opacity:.5}}
+/* overdue */
+.si.miss{background:transparent;box-shadow:inset 0 0 0 2px var(--warn);color:var(--warn);font-weight:800;font-size:16px}
+.pillc.warn{background:rgba(242,113,79,.14);color:var(--warn)}
+.chip.miss{background:transparent;box-shadow:inset 0 0 0 1.5px var(--warn);color:var(--warn)}
+.chip.late{background:var(--soft2);color:var(--ink2)}
+.pday.past.miss{opacity:1}
+.cal button.miss::after{content:"";position:absolute;left:50%;bottom:5px;width:6px;height:6px;margin-left:-3px;border-radius:50%;background:var(--warn)}
 /* appearance */
 .pals{display:grid;grid-template-columns:repeat(4,1fr);gap:14px 8px}
 .pal{display:flex;flex-direction:column;align-items:center;gap:7px;font-size:12.5px;font-weight:600;color:var(--ink2)}
@@ -619,6 +626,21 @@ const goodSessions = id => Object.values(entries).reduce((s, e) => s + (e.sess |
 const lastScore = id => { const r = results[id]; return r && r.length ? r[r.length-1][1] : null; };
 const planFor = d => plan.find(p => p.d === d);
 const doneOn = (d, id) => !!(entries[d] && (entries[d].tp || []).includes(id));
+const studiedSince = (id, d) => { const t = today(); return Object.keys(entries).some(k => k >= d && k <= t && (entries[k].tp || []).includes(id)); };
+function overdue(){
+  const t = today(), tp = planFor(t), out = [], seen = new Set();
+  plan.filter(p => p.d < t).forEach(p => p.t.forEach(id => {
+    if (seen.has(id) || (tp && tp.t.includes(id))) return;
+    if (!studiedSince(id, p.d)){ seen.add(id); out.push({ id, d:p.d }); }
+  }));
+  return out;
+}
+const dayMissed = d => { const p = planFor(d); return p && d < today() ? p.t.filter(id => !studiedSince(id, d)).length : 0; };
+async function savePlan(p){
+  const parts = JSON.stringify(p).match(/[\s\S]{1,3500}/g) || [];
+  for (let i = 0; i < parts.length; i++) await store.set('plan_'+i, parts[i]);
+  await store.set('plan_n', String(parts.length)); plan = p;
+}
 
 /* ================= готовность и подсказки ================= */
 function readiness(e){
@@ -643,6 +665,7 @@ function norm(except){
 function suggestions(n){
   const out = [], t = today(), add = id => { if (byId[id] && !out.includes(id)) out.push(id); };
   const p = planFor(t); if (p) p.t.filter(id => !doneOn(t, id)).forEach(add);
+  overdue().forEach(o => add(o.id));
   ALL.filter(x => st(x.id) === 1).map(x => ({ id:x.id, ago: lastStudied(x.id) ? daysBetween(lastStudied(x.id), t) : 99 }))
      .filter(o => o.ago >= 2).sort((a, b) => b.ago - a.ago).forEach(o => add(o.id));
   ALL.filter(x => st(x.id) === 0).forEach(x => add(x.id));
@@ -650,6 +673,7 @@ function suggestions(n){
 }
 function why(id){
   const p = planFor(today()); if (p && p.t.includes(id)) return 'по плану на сегодня';
+  const od = overdue().find(o => o.id === id); if (od){ const a = daysBetween(od.d, today()); return 'не успел '+(a === 1 ? 'вчера' : fmtDay(od.d)); }
   if (st(id) === 0) return 'ещё не начата';
   const l = lastStudied(id); if (!l) return 'в процессе';
   const a = daysBetween(l, today()); return a === 0 ? 'занимался сегодня' : 'не повторял '+a+' '+plural(a,'день','дня','дней');
@@ -838,12 +862,24 @@ function courseCard(link){
   return `<${tag} class="card" ${link ? 'data-act="tab" data-v="study"' : ''}><div class="ch"><h2>Курс</h2><small>${done} уверен · ${prog} в процессе</small></div>
     <div class="wide-row"><div class="bigpct">${Math.round(done/ALL.length*100)}%</div><div class="dots" aria-hidden="true">${ALL.map(x => `<i class="s${st(x.id)}"></i>`).join('')}</div></div></${tag}>`;
 }
-function planCard(){
+function planCard(){ return planOnly() + overdueCard(); }
+function overdueCard(){
+  if (cur !== today()) return '';
+  const od = overdue(); if (!od.length) return '';
+  return `<section class="card"><div class="ch"><h2>Не успел</h2><span class="pillc warn">${od.length} ${plural(od.length,'тема','темы','тем')}</span></div>
+    ${od.slice(0, 4).map(o => { const a = daysBetween(o.d, today());
+      return `<button class="trow" data-act="topic" data-v="${o.id}"><span class="si miss">!</span><span class="tx"><b>${byId[o.id].name}</b><small>${o.id} · по плану ${a === 1 ? 'вчера' : fmtDay(o.d)}</small></span><span class="chev">›</span></button>`; }).join('')}
+    ${od.length > 4 ? `<p class="muted" style="padding:4px 0 2px">и ещё ${od.length - 4}</p>` : ''}
+    <button class="secondary" data-act="carry">Перенести в план на сегодня</button></section>`;
+}
+function planOnly(){
   const pl = planFor(cur); if (!pl) return '';
   const next = cur === today() ? (pick || suggestions(1)[0]) : null, done = pl.t.filter(id => doneOn(cur, id)).length;
   return `<section class="card"><div class="ch"><h2>План${cur === today() ? ' на сегодня' : ''}</h2><small>${done} из ${pl.t.length}${pl.f ? ' · '+esc(pl.f) : ''}</small></div>
-    ${pl.t.map(id => { const s = doneOn(cur, id) ? 2 : id === next ? 1 : 0;
-      return `<button class="trow" data-act="topic" data-v="${id}">${sicon(s)}<span class="tx"><b>${byId[id].name}</b><small>${id} · ${s === 2 ? 'сделано' : s === 1 ? 'следующая' : MODULES[byId[id].mod-1].short}</small></span><span class="chev">›</span></button>`; }).join('')}</section>`;
+    ${pl.t.map(id => { const s = doneOn(cur, id) ? 2 : id === next ? 1 : 0, past = cur < today() && s === 0, late = past && studiedSince(id, cur);
+      const ic = past ? (late ? sicon(1) : '<span class="si miss">!</span>') : sicon(s);
+      const sub = past ? (late ? 'сделано позже' : 'не сделано') : s === 2 ? 'сделано' : s === 1 ? 'следующая' : MODULES[byId[id].mod-1].short;
+      return `<button class="trow" data-act="topic" data-v="${id}">${ic}<span class="tx"><b>${byId[id].name}</b><small>${id} · ${sub}</small></span><span class="chev">›</span></button>`; }).join('')}</section>`;
 }
 function sessionsCard(){
   if (!draft.sess.length) return '';
@@ -1021,9 +1057,9 @@ function sheetTopic(id){
 function sheetCal(){
   const t = today(), ws = weekStart(t), start = addDays(ws, -21);
   const days = Array.from({length:28}, (_, i) => addDays(start, i));
-  return `<div class="stitle"><h2>Выбери день</h2><p class="muted">Точка значит, что день заполнен</p></div>
+  return `<div class="stitle"><h2>Выбери день</h2><p class="muted">Точка: день заполнен, оранжевая: остались темы из плана</p></div>
     <div class="cal" style="margin-top:14px">${['пн','вт','ср','чт','пт','сб','вс'].map(d => `<span class="wd">${d}</span>`).join('')}
-    ${days.map(d => `<button class="${d === cur ? 'on' : ''} ${filled(entries[d]) ? 'has' : ''} ${d === cfg.exam ? 'exam' : ''}" data-act="day" data-v="${d}" ${d > t ? 'disabled' : ''}>${parseYmd(d).getDate()}</button>`).join('')}</div>
+    ${days.map(d => `<button class="${d === cur ? 'on' : ''} ${filled(entries[d]) ? 'has' : ''} ${d === cfg.exam ? 'exam' : ''} ${dayMissed(d) ? 'miss' : ''}" data-act="day" data-v="${d}" ${d > t ? 'disabled' : ''}>${parseYmd(d).getDate()}</button>`).join('')}</div>
     ${cur !== t ? `<button class="secondary" style="margin-top:14px" data-act="day" data-v="${t}">Вернуться к сегодня</button>` : ''}`;
 }
 let sheetWasOpen = false;
@@ -1061,11 +1097,14 @@ function studyPlan(){
   if (!plan.length) return `<section class="card"><div class="ch"><h2>Плана пока нет</h2></div>
     <p class="muted">Составь план в NotebookLM и вставь ответ в настройки. Темы на каждый день появятся здесь и на главном экране.</p>
     <button class="secondary" style="margin-top:14px" data-act="gear">Открыть импорт</button></section>`;
-  const t = today();
-  return `<section class="card">${plan.map(p => {
-    const done = p.t.filter(id => doneOn(p.d, id)).length;
-    return `<div class="pday ${p.d === t ? 'today' : p.d < t ? 'past' : ''}"><div class="ph"><b>${fmtDay(p.d)}</b><small>${p.f ? esc(p.f)+' · ' : ''}${done} из ${p.t.length}</small></div>
-      <div class="chips">${p.t.map(id => `<button class="chip ${doneOn(p.d, id) ? 'on' : ''}" data-act="topic" data-v="${id}">${id} ${byId[id].name}</button>`).join('')}</div></div>`;
+  const t = today(), od = overdue();
+  return (od.length ? `<section class="card"><div class="ch"><h2>Хвосты</h2><span class="pillc warn">${od.length} ${plural(od.length,'тема','темы','тем')}</span></div>
+      <p class="muted" style="margin-bottom:4px">Темы из прошлых дней, которые ты ещё не прошёл.</p><button class="secondary" data-act="carry">Перенести в план на сегодня</button></section>` : '')
+    + `<section class="card">${plan.map(p => {
+    const done = p.t.filter(id => doneOn(p.d, id)).length, miss = dayMissed(p.d);
+    return `<div class="pday ${p.d === t ? 'today' : p.d < t ? 'past' : ''} ${miss ? 'miss' : ''}"><div class="ph"><b>${fmtDay(p.d)}</b><small>${p.f ? esc(p.f)+' · ' : ''}${done} из ${p.t.length}${miss ? ` · <span style="color:var(--warn)">${miss} не сделано</span>` : ''}</small></div>
+      <div class="chips">${p.t.map(id => { const c = doneOn(p.d, id) ? 'on' : p.d < t ? (studiedSince(id, p.d) ? 'late' : 'miss') : '';
+        return `<button class="chip ${c}" data-act="topic" data-v="${id}">${id} ${byId[id].name}</button>`; }).join('')}</div></div>`;
   }).join('')}</section>`;
 }
 function studyTests(){ return trainCard() + studyTestsList(); }
@@ -1636,6 +1675,14 @@ document.addEventListener('click', async e => {
     case 'cardyes': deck.q.shift(); deck.known++; deck.flip = false; tick(); break;
     case 'cardno': deck.q.push(deck.q.shift()); deck.flip = false; tick(); break;
     case 'brkend': brk = null; saveBrk(); break;
+    case 'carry': {
+      const ids = overdue().map(o => o.id); if (!ids.length) break;
+      const t = today(), p = plan.map(x => ({ d:x.d, t:x.t.slice(), f:x.f }));
+      let tp = p.find(x => x.d === t);
+      if (!tp){ tp = { d:t, t:[], f:'хвосты' }; p.push(tp); p.sort((a, b) => a.d < b.d ? -1 : 1); }
+      ids.forEach(id => { if (!tp.t.includes(id)) tp.t.push(id); });
+      await savePlan(p); haptic('success'); toast('Перенёс '+ids.length+' '+plural(ids.length,'тему','темы','тем')+' на сегодня'); break;
+    }
 
     case 'qnext': quiz.i++; quiz.pick = null; if (quiz.i >= quiz.qs.length) await finishQuiz(); toTop = true; break;
 
